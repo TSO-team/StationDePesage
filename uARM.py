@@ -1,22 +1,35 @@
-# File:        algorithm.py
+#!/usr/bin/env python3
+
+# File:        uARM.py
 # By:          Samuel Duclos
 # For:         My team.
-# Description: Pseudocode for TSO_team.
+# Description: UARM control in Python for TSO_team.
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+import os, sys, time
+from uf.wrapper.uarm_api import UarmAPI
+from uf.utils.log import *
 from communication.CAN.protocol import condition_met
-import pyuarm
 
-balance_position = {'x': 0, 'y':, 0, 'z': 0, 'speed': 100}
-drop_position = {'x': 100, 'y':, 100, 'z': 100, 'speed': 100}
+#logger_init(logging.VERBOSE)
+#logger_init(logging.DEBUG)
+logger_init(logging.INFO)
 
-arm = pyuarm.get_uarm()
-arm.connect()
+balance_position = {'x': 0, 'y':, 0, 'z': 0, 'speed': 100, 'relative': False, 'wait': True}
+drop_position = {'x': 190, 'y':, 0, 'z': 150, 'speed': 100, relative: False, 'wait': True}
+
+#uarm = UarmAPI(dev_port='/dev/ttyUSB0')
+uarm = UarmAPI(filters={'hwid': 'USB VID:PID=0403:6001'}) # Default filter.
+
+time.sleep(2)
+print(uarm.get_device_info())
 
 while True:
-    arm.reset()
-    while True:
-        if condition_met():
-            arm.set_position(**balance_position)
-            arm.set_pump(True)
-            arm.set_position(**drop_position)
-            arm.set_pump(False)
+    uarm.reset()
+    if condition_met():
+        uarm.set_position(**balance_position)
+        uarm.set_pump(on=True)
+        uarm.set_buzzer()
+        uarm.set_position(**drop_position)
+        uarm.set_pump(on=False)
+        uarm.set_buzzer()
