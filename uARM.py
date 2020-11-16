@@ -15,8 +15,8 @@ from communication.CAN.protocol import condition_met
 #logger_init(logging.DEBUG)
 logger_init(logging.INFO)
 
-balance_position = {'x': 0, 'y':, 0, 'z': 0, 'speed': 100, 'relative': False, 'wait': True}
-drop_position = {'x': 190, 'y':, 0, 'z': 150, 'speed': 100, relative: False, 'wait': True}
+balance_position = {'x': 0, 'y': 0, 'z': 0, 'speed': 100, 'relative': False, 'wait': True}
+drop_position = {'x': 190, 'y': 0, 'z': 150, 'speed': 100, 'relative': False, 'wait': True}
 
 #uarm = UarmAPI(dev_port='/dev/ttyUSB0')
 uarm = UarmAPI(filters={'hwid': 'USB VID:PID=0403:6001'}) # Default filter.
