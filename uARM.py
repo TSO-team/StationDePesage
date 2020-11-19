@@ -5,31 +5,34 @@
 # For:         My team.
 # Description: UARM control in Python for TSO_team.
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
-import os, sys, time
-from uf.wrapper.uarm_api import UarmAPI
-from uf.utils.log import *
-from communication.CAN.protocol import condition_met
+import time
+import pyuarm
+#from communication.CAN.protocol import condition_met
 
 #logger_init(logging.VERBOSE)
 #logger_init(logging.DEBUG)
 logger_init(logging.INFO)
 
-balance_position = {'x': 0, 'y': 0, 'z': 0, 'speed': 100, 'relative': False, 'wait': True}
-drop_position = {'x': 190, 'y': 0, 'z': 150, 'speed': 100, 'relative': False, 'wait': True}
+initial_position = {'x': 35.93, 'y': 124.12, 'z': 224.35, 'speed': 150, 'relative': False, 'wait': True}
+balance_position = {'x': 75.52, 'y': 280.37, 'z': 190.34, 'speed': 150, 'relative': False, 'wait': True}
+drop_position = {'x': 73.87, 'y': 274.24, 'z': 210.05, 'speed': 150, 'relative': False, 'wait': True}
 
-#uarm = UarmAPI(dev_port='/dev/ttyUSB0')
-uarm = UarmAPI(filters={'hwid': 'USB VID:PID=0403:6001'}) # Default filter.
+uarm = pyuarm.UArm(port_name='/dev/ttyUSB0')
 
 time.sleep(2)
-print(uarm.get_device_info())
+uarm.set_servo_detach()
 
 while True:
-    uarm.reset()
-    if condition_met():
-        uarm.set_position(**balance_position)
-        uarm.set_pump(on=True)
-        uarm.set_buzzer()
-        uarm.set_position(**drop_position)
-        uarm.set_pump(on=False)
-        uarm.set_buzzer()
+    uarm.set_position(**initial_position)
+    #if condition_met():
+    if True:
+        uarm.set_servo_attach()
+        uarm.set_position(**balance_position)
+        uarm.set_pump(ON=True)
+        uarm.set_buzzer(frequency=60, duration=1.5)
+        time.sleep(5)
+        uarm.set_position(**drop_position)
+        uarm.set_pump(ON=False)
+        uarm.set_buzzer(frequency=120, duration=1.5)
+        uarm.set_servo_attach()
+        time.sleep(5)
