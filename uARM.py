@@ -5,9 +5,34 @@
 # For:         My team.
 # Description: UARM control in Python for TSO_team.
 
+#from communication.CAN.protocol import condition_met
+from adafruit_extended_bus import ExtendedI2C as I2C
+
 import time
 import pyuarm
-#from communication.CAN.protocol import condition_met
+import busio
+import adafruit_vl6180x
+
+def read_vl6180x():
+    range_mm = sensor.range
+    print("Range: {0}mm".format(range_mm))
+    # Read the light, note this requires specifying a gain value:
+    # - adafruit_vl6180x.ALS_GAIN_1 = 1x
+    # - adafruit_vl6180x.ALS_GAIN_1_25 = 1.25x
+    # - adafruit_vl6180x.ALS_GAIN_1_67 = 1.67x
+    # - adafruit_vl6180x.ALS_GAIN_2_5 = 2.5x
+    # - adafruit_vl6180x.ALS_GAIN_5 = 5x
+    # - adafruit_vl6180x.ALS_GAIN_10 = 10x
+    # - adafruit_vl6180x.ALS_GAIN_20 = 20x
+    # - adafruit_vl6180x.ALS_GAIN_40 = 40x
+    light_lux = sensor.read_lux(adafruit_vl6180x.ALS_GAIN_1)
+    print("Light (1x gain): {0}lux".format(light_lux))
+
+# Create I2C bus.
+i2c = I2C(1)
+
+# Create sensor instance.
+sensor = adafruit_vl6180x.VL6180X(i2c)
 
 #logger_init(logging.VERBOSE)
 #logger_init(logging.DEBUG)
@@ -28,6 +53,7 @@ while True:
     if True:
         uarm.set_servo_attach()
         uarm.set_position(**balance_position)
+        read_vl6180x()
         uarm.set_pump(ON=True)
         uarm.set_buzzer(frequency=60, duration=1.5)
         time.sleep(5)
