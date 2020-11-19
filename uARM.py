@@ -42,6 +42,7 @@ uarm = pyuarm.UArm(port_name='/dev/ttyUSB0')
 time.sleep(2)
 
 while True:
+    uarm.set_servo_attach()
     uarm.set_position(**initial_position)
     uarm.set_servo_detach()
     #if condition_met():
