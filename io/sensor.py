@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        VL6180X.py
+# File:        io/sensor.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Time-of-Flight sensor control (attached to uARM tip).
