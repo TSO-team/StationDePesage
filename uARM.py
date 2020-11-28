@@ -9,7 +9,7 @@
 bustype = 'vcan0'
 arbitration_id = 003
 sensor_threshold = 0.5
-uart_delay, grab_delay, drop_delay, delay_0, delay_1, delay_2 = 2, 5, 5, 1, 1, 1 # seconds
+uart_delay, grab_delay, drop_delay, delay_0, delay_1, delay_2, delay = 2, 5, 5, 1, 1, 1, 5 # seconds
 uarm_tty_port = '/dev/ttyUSB0'
 balance_tty_port = '/dev/ttyO3'
 
@@ -35,52 +35,99 @@ def set_pump(on=False, pump_delay=1):
     uarm.set_pump(ON=on)
     time.sleep(pump_delay)
 
-def grab(sensor_threshold=0.5, pump_delay=1, grab_delay=1):
+def grab(uarm=None, 
+         grab_position=None, 
+         sensor_threshold=0.5, 
+         pump_delay=1, 
+         grab_delay=1, 
+         delay_0=1, 
+         delay_1=1, 
+         delay_2=1):
+    set_position(position=grab_position, delay_0=delay_0, delay_1=delay_1, delay_2=delay_2)
     while not (sensor.read_distance() < sensor_threshold):
         set_pump(on=True, pump_delay=pump_delay)
         buzzer.play_funky_town(uarm=uarm, delay=grab_delay)
 
-def drop(pump_delay=1, drop_delay=1):
+def drop(uarm=None, drop_position=None, pump_delay=1, drop_delay=1, delay_0=1, delay_1=1, delay_2=1):
+    set_position(position=drop_position, delay_0=delay_0, delay_1=delay_1, delay_2=delay_2)
     set_pump(on=False, pump_delay=pump_delay)
     buzzer.play_funky_town(uarm=uarm, delay=drop_delay)
 
-def set_weight_somewhere(grab_position=None, 
+def return_to_initial_position(uarm=None, position=None, delay_0=1, delay_1=1, delay_2=1, delay=5):
+    set_position(position=initial_position, delay_0=delay_0, delay_1=delay_1, delay_2=delay_2)
+    buzzer.play_funky_town(uarm=uarm, delay=drop_delay)
+
+def set_weight_somewhere(uarm=None, 
+                         grab_position=None, 
                          drop_position=None, 
                          grab_delay=5, 
                          drop_delay=5, 
+                         pump_delay=1, 
                          delay_0=1, 
                          delay_1=1, 
                          delay_2=1, 
+                         delay=1, 
                          sensor_threshold=0.5):
-    set_position(grab_position, delay_0=1, delay_1=1, delay_2=1)
-    grab(sensor_threshold=sensor_threshold, pump_delay=pump_delay, grab_delay=grab_delay)
-    set_position(drop_position, delay_0=1, delay_1=1, delay_2=1)
-    drop(pump_delay=1, drop_delay=1)
-    set_position(initial_position, delay_0=delay_0, delay_1=delay_1, delay_2=delay_2)
-    buzzer.play_funky_town(uarm=uarm, delay=drop_delay)
+
+    grab(uarm=uarm, 
+         grab_position=grab_position, 
+         sensor_threshold=sensor_threshold, 
+         pump_delay=pump_delay, 
+         grab_delay=grab_delay, 
+         delay_0=delay_0, 
+         delay_1=delay_1, 
+         delay_2=delay_2)
+
+    drop(uarm=uarm, 
+         drop_position=drop_position, 
+         pump_delay=pump_delay, 
+         drop_delay=drop_delay, 
+         delay_0=delay_0, 
+         delay_1=delay_1, 
+         delay_2=delay_2)
+
+    return_to_initial_position(uarm=uarm, 
+                               position=initial_position, 
+                               delay_0=delay_0, 
+                               delay_1=delay_1, 
+                               delay_2=delay_2, 
+                               delay=delay)
 
 TSO_protocol = CAN.Protocol(bustype=bustype, arbitration_id=arbitration_id)
 TSO_protocol.send(data=[0x40, 0xAA], delay=1) # Test with candump.
-set_position(initial_position, delay_0=delay_0, delay_1=delay_1, delay_2=delay_2)
-buzzer.play_funky_town(uarm=uarm, delay=drop_delay)
+
+return_to_initial_position(uarm=uarm, 
+                           position=initial_position, 
+                           delay_0=delay_0, 
+                           delay_1=delay_1, 
+                           delay_2=delay_2, 
+                           delay=delay)
 
 while True:
     if TSO_protocol.condition_met():
-        set_weight_somewhere(grab_position=vehicle_position, 
+        set_weight_somewhere(uarm=uarm, 
+                             grab_position=vehicle_position, 
                              drop_position=balance_position, 
                              grab_delay=grab_delay, 
                              drop_delay=drop_delay, 
+                             pump_delay=pump_delay, 
                              delay_0=delay_0, 
                              delay_1=delay_1, 
                              delay_2=delay_2, 
+                             delay=delay, 
                              sensor_threshold=sensor_threshold)
-        subprocess.check_output("bash io/balance.sh " + balance_tty_port, stderr=subprocess.STDOUT, shell=True)
-        set_weight_somewhere(grab_position=balance_position, 
+
+        subprocess.check_output('bash io/balance.sh ' + balance_tty_port, stderr=subprocess.STDOUT, shell=True)
+
+        set_weight_somewhere(uarm=uarm, 
+                             grab_position=balance_position, 
                              drop_position=vehicle_position, 
                              grab_delay=grab_delay, 
                              drop_delay=drop_delay, 
+                             pump_delay=pump_delay, 
                              delay_0=delay_0, 
                              delay_1=delay_1, 
                              delay_2=delay_2, 
+                             delay=delay, 
                              sensor_threshold=sensor_threshold)
 
