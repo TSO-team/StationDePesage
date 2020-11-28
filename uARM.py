@@ -9,10 +9,6 @@
 import time
 import pyuarm
 
-from .io import sensor
-from .io import buzzer
-from .io import CAN
-
 sensor_threshold = 0.5
 uart_delay = 2 # seconds
 grab_delay = 5 # seconds
