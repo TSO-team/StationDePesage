@@ -28,3 +28,4 @@ echo -ne "P\n\r" > $TTY
 sleep 5
 
 kill $PID > /dev/null
+exit 0

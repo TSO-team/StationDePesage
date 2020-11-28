@@ -11,11 +11,8 @@ import time
 import busio
 import adafruit_vl6180x
 
-# Create I2C bus.
-i2c = I2C(1)
-
-# Create sensor instance.
-sensor = adafruit_vl6180x.VL6180X(i2c)
+i2c = I2C(1) # Create I2C bus.
+sensor = adafruit_vl6180x.VL6180X(i2c) # Create sensor instance.
 
 time.sleep(2)
 
