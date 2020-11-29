@@ -7,8 +7,10 @@
 
 from __future__ import print_function
 from utils import CAN
+import time
 
 # Modifiable variables.
+msg = [0x40, 0xAA]
 arbitration_id = 3
 interface_type = 'vcan'
 bitrate = 50000
@@ -20,8 +22,8 @@ if __name__ == '__main__':
                                 bitrate=bitrate, 
                                 delay=CAN_delay)
 
-    msg = [0x40, 0xAA]
     TSO_protocol.send(data=msg)
+    time.sleep(CAN_delay)
 
     msg = TSO_protocol.receive()
     if msg is not None:

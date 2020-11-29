@@ -37,7 +37,8 @@ class Protocol:
         # Increase sending buffer size.
         subprocess.run('/sbin/ifconfig ' + self.bustype + ' txqueuelen 1000', shell=True, check=True)
 
-        self.bus = can.interface.ThreadSafeBus(channel=channel, bustype=self.bustype)
+        #self.bus = can.interface.Bus(channel=channel, bustype=self.bustype)
+        self.bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick and dirty test.
 
     def __del__(self):
         subprocess.run('/sbin/ip link set down ' + self.bustype)

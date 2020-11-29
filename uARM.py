@@ -16,7 +16,8 @@ bitrate = 50000
 sensor_threshold = 0.5
 uarm_tty_port = '/dev/ttyUSB0'
 balance_tty_port = '/dev/ttyO3'
-uart_delay, grab_delay, drop_delay, delay_0, delay_1, delay_2, delay, CAN_delay = 2, 5, 5, 1, 1, 1, 5, 1 # seconds
+uart_delay, grab_delay, drop_delay, pump_delay, CAN_delay = 2, 5, 5, 1, 1 # seconds
+delay_0, delay_1, delay_2, delay = 1, 1, 1, 5 # seconds
 
 initial_position = {'x': 35.93, 'y': 124.12, 'z': 224.35, 'speed': 150, 'relative': False, 'wait': True}
 balance_position = {'x': 75.52, 'y': 280.37, 'z': 190.34, 'speed': 150, 'relative': False, 'wait': True}
