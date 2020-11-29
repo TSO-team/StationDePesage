@@ -21,26 +21,27 @@ class Protocol:
 
         signal.signal(signal.SIGINT, self.__del__) # Handle exits for clean up.
 
-        subprocess.run('modprobe vcan') # Ensure kernel modules are loaded.
+        subprocess.run('/sbin/modprobe vcan', shell=True, check=True) # Ensure kernel modules are loaded.
 
         # Setup interface if it doesn't exist.
         if not os.path.exists('/sys/class/net/' + self.bustype):
-            subprocess.run('ip link add dev ' + self.bustype + ' type ' + self.interface_type)
+            subprocess.run('/sbin/ip link add dev ' + self.bustype + ' type ' + self.interface_type, shell=True, check=True)
 
         # Virtual CAN interface has no bitrate.
         bitrate = ' bitrate ' + str(bitrate) if self.interface_type != 'vcan' else ''
 
         # Make sure the interface is up.
-        subprocess.run('ip link set up ' + self.bustype + ' type ' + self.interface_type + bitrate)
+        subprocess.run('/sbin/ip link set up ' + self.bustype + ' type ' + self.interface_type + bitrate, 
+                       shell=True, check=True)
 
         # Increase sending buffer size.
-        subprocess.run('ifconfig ' + self.bustype + ' txqueuelen 1000')
+        subprocess.run('/sbin/ifconfig ' + self.bustype + ' txqueuelen 1000', shell=True, check=True)
 
         self.bus = can.interface.ThreadSafeBus(channel=channel, bustype=self.bustype)
 
     def __del__(self):
-        subprocess.run('ip link set down ' + self.bustype)
-        subprocess.run('ip link delete dev ' + self.bustype + ' type ' + self.interface_type)
+        subprocess.run('/sbin/ip link set down ' + self.bustype)
+        subprocess.run('/sbin/ip link delete dev ' + self.bustype + ' type ' + self.interface_type)
 
     def send(self, data):
         msg = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
