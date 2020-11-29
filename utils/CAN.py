@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        utils/CAN.py
+# File:        io/CAN.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: TSO protocol for CAN bus.
@@ -31,25 +31,25 @@ class Protocol:
         bitrate = ' bitrate ' + str(bitrate) if self.interface_type != 'vcan' else ''
 
         # Make sure the interface is up.
-        subprocess.run('/sbin/ip link set up ' + self.bustype + ' type ' + self.interface_type + bitrate, 
-                       shell=True, check=True)
+        subprocess.run('/sbin/ip link set up ' + self.bustype + ' type ' + self.interface_type + bitrate, shell=True, check=True)
 
         # Increase sending buffer size.
         subprocess.run('/sbin/ifconfig ' + self.bustype + ' txqueuelen 1000', shell=True, check=True)
 
         #self.bus = can.interface.Bus(channel=channel, bustype=self.bustype)
-        self.bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick and dirty test.
+        self.sending_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
+        self.receiving_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
 
     def __del__(self):
-        subprocess.run('/sbin/ip link set down ' + self.bustype)
-        subprocess.run('/sbin/ip link delete dev ' + self.bustype + ' type ' + self.interface_type)
+        subprocess.run('/sbin/ip link set down ' + self.bustype, shell=True, check=True)
+        subprocess.run('/sbin/ip link delete dev ' + self.bustype + ' type ' + self.interface_type, shell=True, check=True)
 
     def send(self, data):
         msg = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
 
         try:
-            self.bus.send(msg)
-            print('Message sent on {}.'.format(self.bus.channel_info))
+            self.sending_bus.send(msg)
+            print('Message sent on {}.'.format(self.sending_bus.channel_info))
         except can.CanError:
             print('CAN ERROR WHILE SENDING MESSAGE!')
 
@@ -57,10 +57,10 @@ class Protocol:
 
     def receive(self):
         try:
-            msg = self.bus.recv(0.0) # Non-blocking read.
+            msg = self.receiving_bus.recv(0.0) # Non-blocking read.
 
             if msg is not None:
-                print('Message received on {}.'.format(self.bus.channel_info))
+                print('Message received on {}.'.format(self.receiving_bus.channel_info))
 
         except can.CanError:
             print('CAN ERROR WHILE RECEIVING MESSAGE!')
