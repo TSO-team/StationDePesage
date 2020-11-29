@@ -6,26 +6,26 @@
 # Description: uARM control in Python for TSO_team.
 # TODO:        Merge balance and use new CAN protocol.
 
+from __future__ import print_function
+from .io import buzzer, CAN, sensor
+import pyuarm, subprocess, time
+
 CAN_interface_type = 'vcan'
 arbitration_id = 003
+bitrate = 50000
 sensor_threshold = 0.5
-uart_delay, grab_delay, drop_delay, delay_0, delay_1, delay_2, delay = 2, 5, 5, 1, 1, 1, 5 # seconds
 uarm_tty_port = '/dev/ttyUSB0'
 balance_tty_port = '/dev/ttyO3'
-bitrate = 50000
-CAN_delay = 1 # seconds
+uart_delay, grab_delay, drop_delay, delay_0, delay_1, delay_2, delay, CAN_delay = 2, 5, 5, 1, 1, 1, 5, 1 # seconds
 
 initial_position = {'x': 35.93, 'y': 124.12, 'z': 224.35, 'speed': 150, 'relative': False, 'wait': True}
 balance_position = {'x': 75.52, 'y': 280.37, 'z': 190.34, 'speed': 150, 'relative': False, 'wait': True}
 vehicle_position = {'x': 73.87, 'y': 274.24, 'z': 210.05, 'speed': 150, 'relative': False, 'wait': True}
 
-import time, pyuarm, subprocess
-from .io import buzzer, CAN, sensor
-
 uarm = pyuarm.UArm(port_name=uarm_tty_port)
 time.sleep(uart_delay)
 
-def set_position(position, delay_0=1, delay_1=1, delay_2=1)
+def set_position(position, delay_0=1, delay_1=1, delay_2=1):
     uarm.set_servo_attach()
     time.sleep(delay_0)
     uarm.set_position(**position)
@@ -99,7 +99,6 @@ TSO_protocol = CAN.Protocol(interface_type=CAN_interface_type,
                             arbitration_id=arbitration_id, 
                             bitrate=bitrate, 
                             delay=CAN_delay)
-TSO_protocol.send(data=[0x40, 0xAA]) # candump vcan0
 
 return_to_initial_position(uarm=uarm, 
                            position=initial_position, 

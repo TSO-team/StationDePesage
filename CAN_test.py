@@ -5,14 +5,14 @@
 # For:         My team.
 # Description: CAN test in Python for TSO_team.
 
+from __future__ import print_function
+from .io import CAN
+
 # Modifiable variables.
 arbitration_id = 003
 interface_type = 'vcan'
 bitrate = 50000
 CAN_delay = 1 # seconds
-
-from __future__ import print_function
-from .io import CAN
 
 if __name__ == '__main__':
     TSO_protocol = CAN.Protocol(interface_type=interface_type, 
@@ -20,5 +20,10 @@ if __name__ == '__main__':
                                 bitrate=bitrate, 
                                 delay=CAN_delay)
 
-    TSO_protocol.send(data=[0x40, 0xAA]) # candump vcan0
+    msg = [0x40, 0xAA]
+    TSO_protocol.send(data=msg)
+
+    msg = TSO_protocol.receive()
+    if msg is not None:
+        print(msg)
 

@@ -5,10 +5,11 @@
 # For:         My team.
 # Description: TSO protocol for CAN bus.
 
+from __future__ import print_function
+import atexit, can, os, subprocess, time
+
 channel = 'socketcan'
 is_extended_id = False
-
-import atexit, can, os, subprocess, time
 
 class Protocol:
     def __init__(self, interface_type='vcan', arbitration_id=003, bitrate=50000, delay=1):
