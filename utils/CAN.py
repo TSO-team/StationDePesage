@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        io/CAN.py
+# File:        utils/CAN.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: TSO protocol for CAN bus.
@@ -37,8 +37,10 @@ class Protocol:
         subprocess.run('/sbin/ifconfig ' + self.bustype + ' txqueuelen 1000', shell=True, check=True)
 
         #self.bus = can.interface.Bus(channel=channel, bustype=self.bustype)
-        self.sending_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
-        self.receiving_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
+        #self.sending_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
+        #self.receiving_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
+        self.sending_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
+        self.receiving_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
 
     def __del__(self):
         subprocess.run('/sbin/ip link set down ' + self.bustype, shell=True, check=True)
@@ -68,5 +70,9 @@ class Protocol:
         return msg
 
     def condition_met(self):
-        return True # Define this later...
+        msg = self.receive()
+        if (msg[0] & 0x10) == 0x10:
+            return True
+        else:
+            return False
 

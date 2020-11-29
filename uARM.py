@@ -7,8 +7,8 @@
 # TODO:        Merge balance and use new CAN protocol.
 
 from __future__ import print_function
-from utils import buzzer, CAN, sensor
-import pyuarm, subprocess, time
+from utils import balance, buzzer, CAN, sensor
+import pyuarm, time
 
 CAN_interface_type = 'vcan'
 arbitration_id = 3
@@ -122,7 +122,8 @@ while True:
                              delay=delay, 
                              sensor_threshold=sensor_threshold)
 
-        subprocess.check_output('bash io/balance.sh ' + balance_tty_port, stderr=subprocess.STDOUT, shell=True)
+        msg = balance.weigh(balance_tty_port=balance_tty_port)
+        TSO_protocol.send(msg)
 
         set_weight_somewhere(uarm=uarm, 
                              grab_position=balance_position, 

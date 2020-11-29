@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# File:        io/balance.sh
+# File:        utils/balance.sh
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Outputs current weight from balance to UART.
 
 if [ "$#" -ne 1 ]; then
     echo "Usage: "
-    echo "    sudo bash io/balance.sh &"
+    echo "    sudo bash utils/balance.sh &"
     exit
 else
     #TTY=/dev/ttyUSB0

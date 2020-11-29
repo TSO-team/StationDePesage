@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        io/sensor.py
+# File:        utils/sensor.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Time-of-Flight sensor control (attached to uARM tip).
