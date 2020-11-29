@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
 
-# File:        io/CAN.py
+# File:        utils/CAN.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: TSO protocol for CAN bus.
 
 from __future__ import print_function
-import atexit, can, os, subprocess, time
+import can, os, signal, subprocess, time
 
 channel = 'socketcan'
 is_extended_id = False
 
 class Protocol:
-    def __init__(self, interface_type='vcan', arbitration_id=003, bitrate=50000, delay=1):
+    def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, delay=1):
         self.arbitration_id = arbitration_id
         self.is_extended_id = is_extended_id
         self.interface_type = interface_type
         self.bustype = interface_type + str(0)
         self.delay = delay
+
+        signal.signal(signal.SIGINT, self.__del__) # Handle exits for clean up.
 
         subprocess.run('modprobe vcan') # Ensure kernel modules are loaded.
 
@@ -36,7 +38,6 @@ class Protocol:
 
         self.bus = can.interface.ThreadSafeBus(channel=channel, bustype=self.bustype)
 
-    @atexit.register
     def __del__(self):
         subprocess.run('ip link set down ' + self.bustype)
         subprocess.run('ip link delete dev ' + self.bustype + ' type ' + self.interface_type)

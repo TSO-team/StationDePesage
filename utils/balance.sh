@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# File:        io/balance.sh
+# File:        utils/balance.sh
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Outputs current weight from balance to UART.

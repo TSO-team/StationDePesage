@@ -6,10 +6,10 @@
 # Description: CAN test in Python for TSO_team.
 
 from __future__ import print_function
-from .io import CAN
+from utils import CAN
 
 # Modifiable variables.
-arbitration_id = 003
+arbitration_id = 3
 interface_type = 'vcan'
 bitrate = 50000
 CAN_delay = 1 # seconds

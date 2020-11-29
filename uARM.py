@@ -7,11 +7,11 @@
 # TODO:        Merge balance and use new CAN protocol.
 
 from __future__ import print_function
-from .io import buzzer, CAN, sensor
+from utils import buzzer, CAN, sensor
 import pyuarm, subprocess, time
 
 CAN_interface_type = 'vcan'
-arbitration_id = 003
+arbitration_id = 3
 bitrate = 50000
 sensor_threshold = 0.5
 uarm_tty_port = '/dev/ttyUSB0'
