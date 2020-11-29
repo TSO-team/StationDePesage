@@ -6,12 +6,14 @@
 # Description: uARM control in Python for TSO_team.
 # TODO:        Merge balance and use new CAN protocol.
 
-bustype = 'vcan0'
+CAN_interface_type = 'vcan'
 arbitration_id = 003
 sensor_threshold = 0.5
 uart_delay, grab_delay, drop_delay, delay_0, delay_1, delay_2, delay = 2, 5, 5, 1, 1, 1, 5 # seconds
 uarm_tty_port = '/dev/ttyUSB0'
 balance_tty_port = '/dev/ttyO3'
+bitrate = 50000
+CAN_delay = 1 # seconds
 
 initial_position = {'x': 35.93, 'y': 124.12, 'z': 224.35, 'speed': 150, 'relative': False, 'wait': True}
 balance_position = {'x': 75.52, 'y': 280.37, 'z': 190.34, 'speed': 150, 'relative': False, 'wait': True}
@@ -93,8 +95,11 @@ def set_weight_somewhere(uarm=None,
                                delay_2=delay_2, 
                                delay=delay)
 
-TSO_protocol = CAN.Protocol(bustype=bustype, arbitration_id=arbitration_id)
-TSO_protocol.send(data=[0x40, 0xAA], delay=1) # Test with candump.
+TSO_protocol = CAN.Protocol(interface_type=CAN_interface_type, 
+                            arbitration_id=arbitration_id, 
+                            bitrate=bitrate, 
+                            delay=CAN_delay)
+TSO_protocol.send(data=[0x40, 0xAA]) # candump vcan0
 
 return_to_initial_position(uarm=uarm, 
                            position=initial_position, 
