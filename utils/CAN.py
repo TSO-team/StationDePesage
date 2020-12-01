@@ -37,10 +37,10 @@ class Protocol:
         subprocess.run('/sbin/ifconfig ' + self.bustype + ' txqueuelen 1000', shell=True, check=True)
 
         #self.bus = can.interface.Bus(channel=channel, bustype=self.bustype)
-        #self.sending_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
-        #self.receiving_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
-        self.sending_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
-        self.receiving_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
+        self.sending_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
+        self.receiving_bus = can.interface.Bus(channel=channel, bustype='virtual') # Quick test.
+        #self.sending_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
+        #self.receiving_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
 
     def __del__(self):
         subprocess.run('/sbin/ip link set down ' + self.bustype, shell=True, check=True)
@@ -70,9 +70,5 @@ class Protocol:
         return msg
 
     def condition_met(self):
-        msg = self.receive()
-        if (msg[0] & 0x10) == 0x10:
-            return True
-        else:
-            return False
-
+        return True
+        #return (self.receive()[0] & 0x10) == 0x10
