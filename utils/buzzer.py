@@ -7,25 +7,24 @@
 
 import time
 
-'''
-def play_funky_town(uarm=None, delay=5):
+def play_funky_town(uarm=None, duration_multiplier=2.0, servo_detach_delay=2, transition_delay=5):
     uarm.set_servo_detach()
-    time.sleep(2)
-    uarm.set_buzzer(frequency=440, duration=0.25)
-    uarm.set_buzzer(frequency=440, duration=0.25)
-    uarm.set_buzzer(frequency=392, duration=0.25)
-    uarm.set_buzzer(frequency=440, duration=0.25)
-    time.sleep(1.0)
-    uarm.set_buzzer(frequency=329.63, duration=0.5)
-    time.sleep(1.0)
-    uarm.set_buzzer(frequency=329.63, duration=0.25)
-    uarm.set_buzzer(frequency=440, duration=0.25)
-    uarm.set_buzzer(frequency=587.33, duration=0.25)
-    uarm.set_buzzer(frequency=554.37, duration=0.25)
-    uarm.set_buzzer(frequency=440, duration=0.25)
-    time.sleep(0.25)
-    time.sleep(delay)
-'''
+    time.sleep(servo_detach_delay)
+    uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
+    uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
+    uarm.set_buzzer(frequency=98, duration=0.125 * duration_multiplier)
+    uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
+    time.sleep(0.5 * duration_multiplier)
+    uarm.set_buzzer(frequency=82.41, duration=0.25 * duration_multiplier)
+    time.sleep(0.5 * duration_multiplier)
+    uarm.set_buzzer(frequency=82.41, duration=0.125 * duration_multiplier)
+    uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
+    uarm.set_buzzer(frequency=146.83, duration=0.125 * duration_multiplier)
+    uarm.set_buzzer(frequency=138.59, duration=0.125 * duration_multiplier)
+    uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
+    time.sleep(0.125 * duration_multiplier)
+    time.sleep(transition_delay)
 
-def play_funky_town(uarm=None, delay=5):
-    uarm.set_buzzer(frequency=60, duration=1)
+#def play_funky_town(uarm=None, delay=5):
+#    uarm.set_buzzer(frequency=60, duration=1)
+
