@@ -18,20 +18,20 @@ class Buzzer:
         self.uarm.set_servo_detach()
         time.sleep(self.servo_detach_delay)
 
-    def play_funky_town(self, duration_multiplier=2.5):
+    def play_funky_town(self, frequency_multiplier=1.0, duration_multiplier=3.0):
         self.set_servo_detach()
-        self.uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=98, duration=0.125 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=55 * frequency_multiplier, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=55 * frequency_multiplier, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=49 * frequency_multiplier, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=55 * frequency_multiplier, duration=0.125 * duration_multiplier)
         time.sleep(0.5 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=82.41, duration=0.25 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=41.20 * frequency_multiplier, duration=0.25 * duration_multiplier)
         time.sleep(0.5 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=82.41, duration=0.125 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=146.83, duration=0.125 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=138.59, duration=0.125 * duration_multiplier)
-        self.uarm.set_buzzer(frequency=110, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=41.20 * frequency_multiplier, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=55 * frequency_multiplier, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=73.42 * frequency_multiplier, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=69.30 * frequency_multiplier, duration=0.125 * duration_multiplier)
+        self.uarm.set_buzzer(frequency=55 * frequency_multiplier, duration=0.125 * duration_multiplier)
         time.sleep(0.125 * duration_multiplier)
         time.sleep(self.transition_delay)
 
@@ -46,6 +46,6 @@ class Buzzer:
         signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
-#def play_funky_town(uarm=None, delay=5):
-#    uarm.set_buzzer(frequency=60, duration=1)
+    #def play_funky_town(uarm=None, delay=5):
+    #    self.uarm.set_buzzer(frequency=60, duration=1)
 

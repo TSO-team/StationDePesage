@@ -8,30 +8,29 @@
 from __future__ import print_function
 import can, os, signal, subprocess, time
 
-channel = 'socketcan'
-is_extended_id = False
-
 class Protocol:
-    def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02, delay=1):
+    def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02):
         self.arbitration_id = arbitration_id
-        self.is_extended_id = is_extended_id
         self.interface_type = interface_type
         self.interface = interface_type + str(0)
         self.time_base = time_base
-        self.delay = delay
+        self.is_extended_id = False
+        constructor_arguments = {'channel': 'socketcan'}
 
         # Virtual CAN interface has no bitrate.
         if self.interface_type != 'vcan':
             bitrate = ' bitrate ' + str(bitrate)
             self.bustype = self.interface
+            constructor_arguments['bitrate'] = bitrate
         else:
             self.bustype = 'virtual'
 
         self.handle_exit_signals()
         self.pre_configure_CAN(bitrate=bitrate)
 
-        self.sending_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
-        self.receiving_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
+        constructor_arguments['bustype'] = self.bustype
+        self.sending_bus = can.interface.Bus(**constructor_arguments)
+        self.receiving_bus = can.interface.Bus(**constructor_arguments)
 
     def reset(self):
         subprocess.run('/sbin/ip link set down ' + self.interface, shell=True, check=True)
@@ -47,7 +46,7 @@ class Protocol:
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
     def pre_configure_CAN(self, bitrate=50000):
-        subprocess.run('/sbin/modprobe vcan', shell=True, check=True) # Ensure kernel modules are loaded.
+        subprocess.run('/sbin/modprobe can can_bcm vcan', shell=True, check=True) # Ensure kernel modules are loaded.
 
         # Setup interface if it doesn't exist.
         if not os.path.exists('/sys/class/net/' + self.interface):
@@ -68,8 +67,6 @@ class Protocol:
         except can.CanError:
             print('CAN ERROR WHILE SENDING MESSAGE!')
 
-        time.sleep(self.delay)
-
     def receive(self):
         try:
             msg = self.receiving_bus.recv(0.0) # Non-blocking read.
@@ -87,6 +84,6 @@ class Protocol:
         if msg is not None: # Message seen on CAN bus.
             if msg.arbitration_id == 1: # SYNC received from control bridge.
                 time.sleep(self.time_base * (self.arbitration_id - 1)) # Wait for own turn.
-                return (msg[0] & 0x10) == 0x10 # TSO CAN protocol code for pick up object command.
+                return (msg.data[0] & 0x10) == 0x10 # TSO CAN protocol code for pick up object command.
         return False
 
