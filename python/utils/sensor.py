@@ -8,15 +8,25 @@
 from __future__ import print_function
 from adafruit_extended_bus import ExtendedI2C as I2C
 
-import time
-import busio
-import adafruit_vl6180x
+import adafruit_vl6180x, busio, signal, time
 
 class VL6180X:
     def __init__(self, i2c_port=1):
         i2c = I2C(i2c_port) # Create I2C bus.
         self.sensor = adafruit_vl6180x.VL6180X(i2c) # Create sensor instance.
+        self.handle_exit_signals()
         time.sleep(2)
+
+    def reset(self):
+        print('Sensor closed...')
+
+    def __del__(self):
+        self.reset()
+
+    def handle_exit_signals(self):
+        signal.signal(signal.SIGINT, self.reset) # Handles CTRL-C for clean up.
+        signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
+        signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
     def read_distance(self):
         range_mm = self.sensor.range

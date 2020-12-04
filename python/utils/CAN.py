@@ -33,14 +33,18 @@ class Protocol:
         self.sending_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
         self.receiving_bus = can.interface.Bus(channel=channel, bustype=self.bustype)
 
-    def __del__(self):
+    def reset(self):
         subprocess.run('/sbin/ip link set down ' + self.interface, shell=True, check=True)
         subprocess.run('/sbin/ip link delete dev ' + self.interface + ' type ' + self.interface_type, shell=True, check=True)
+        print('CAN closed...')
+
+    def __del__(self):
+        self.reset()
 
     def handle_exit_signals(self):
-        signal.signal(signal.SIGINT, self.__del__) # Handles CTRL-C for clean up.
-        signal.signal(signal.SIGHUP, self.__del__) # Handles stalled process for clean up.
-        signal.signal(signal.SIGTERM, self.__del__) # Handles clean exits for clean up.
+        signal.signal(signal.SIGINT, self.reset) # Handles CTRL-C for clean up.
+        signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
+        signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
     def pre_configure_CAN(self, bitrate=50000):
         subprocess.run('/sbin/modprobe vcan', shell=True, check=True) # Ensure kernel modules are loaded.
