@@ -77,12 +77,14 @@ while True:
                     weight = balance.weigh()
                     CAN_message_send = TSO_protocol.parse_balance_output(weight, unit)
                     uarm.set_weight_to_somewhere(grab_position=balance_position, drop_position=vehicle_position, sensor=sensor, sensor_threshold=sensor_threshold)
+        timestamp_parsed = int(timestamp.milliseconds / time_base_in_milliseconds)
         timestamp_now = datetime.datetime.fromtimestamp(time.time())
-        if int(timestamp.milliseconds / time_base_in_milliseconds) > int(timestamp_now.milliseconds / time_base_in_milliseconds):
+        timestamp_now_parsed = int(timestamp_now.milliseconds / time_base_in_milliseconds)
+        if timestamp_parsed > timestamp_now_parsed:
             CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
             processes.kill()
             break
-        elif int(timestamp.milliseconds / time_base_in_milliseconds) == int(timestamp_now.milliseconds / time_base_in_milliseconds):
+        elif timestamp_parsed == timestamp_now_parsed:
             break
         else:
             continue
