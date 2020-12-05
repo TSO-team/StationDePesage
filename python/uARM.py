@@ -56,6 +56,7 @@ TSO_protocol = CAN.Protocol(interface_type=CAN_interface_type,
 
 uarm.reset()
 
+'''
 while True:
     if TSO_protocol.condition_met():
         uarm.set_weight_to_somewhere(grab_position=vehicle_position, drop_position=balance_position, sensor=sensor, sensor_threshold=sensor_threshold)
@@ -64,8 +65,8 @@ while True:
         buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
         uarm.set_weight_to_somewhere(grab_position=balance_position, drop_position=vehicle_position, sensor=sensor, sensor_threshold=sensor_threshold)
         buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
-
 '''
+
 # CAN protocol implementation rewrite.
 while True:
     CAN_message_received_old = CAN_message_received.copy()
@@ -98,4 +99,4 @@ while True:
             continue
 
     TSO_protocol.send(CAN_message_send)
-'''
+
