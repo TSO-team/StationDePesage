@@ -24,6 +24,7 @@
 
 from __future__ import print_function
 from utils import balance, buzzer, CAN, sensor, uarm
+import datetime, time
 
 CAN_interface_type, CAN_ID, CAN_bitrate, CAN_time_base = 'vcan', 3, 50000, 0.02 # 20 milliseconds between each station.
 uarm_tty_port, balance_tty_port = '/dev/ttyUSB1', '/dev/ttyUSB0'
@@ -64,21 +65,37 @@ while True:
         uarm.set_weight_to_somewhere(grab_position=balance_position, drop_position=vehicle_position, sensor=sensor, sensor_threshold=sensor_threshold)
         buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
 
-
 '''
 # CAN protocol implementation rewrite.
-def payload():
+while True:
+    CAN_message_received_old = CAN_message_received.copy()
+    CAN_message_received = TSO_protocol.receive()
+
+    timestamp = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc)
+    timestamp += datetime.datetime.timedelta(milliseconds=int(TSO_protocol.time_base * 1000) * (TSO_protocol.arbitration_id - 1))
+
     while True:
-        CAN_message_received_old = CAN_message_received.copy()
-        CAN_message_received = TSO_protocol.receive()
-
         if CAN_message_received is not None: # Message seen on CAN bus.
+            if TSO_protocol.is_error(CAN_message_received):
+                CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
+                processes.kill()
+                break
             if CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
-                time.sleep(TSO_protocol.time_base * (TSO_protocol.arbitration_id - 1)) # Wait for own turn.
-                if CAN_message_received_old != CAN_message_received: # Fix this.
-                    return (CAN_message_received.data[0] & 0x10) == 0x10 # TSO CAN protocol code for pick up object command.
-            elif (CAN_message_received.data[0] & 0xE0) > 0x03:
-                CAN_message_send = (CAN_message_send & 0x1F) | 0xE0
-        return False
-'''
+                unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
+                if unit is not None:
+                    uarm.set_weight_to_somewhere(grab_position=vehicle_position, drop_position=balance_position, sensor=sensor, sensor_threshold=sensor_threshold)
+                    weight = balance.weigh()
+                    CAN_message_send = TSO_protocol.parse_balance_output(weight, unit)
+                    uarm.set_weight_to_somewhere(grab_position=balance_position, drop_position=vehicle_position, sensor=sensor, sensor_threshold=sensor_threshold)
+        timestamp_now = datetime.datetime.fromtimestamp(time.time())
+        if int(timestamp.milliseconds / TSO_protocol.time_base) > int(timestamp_now.milliseconds / TSO_protocol.time_base):
+            CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
+            processes.kill()
+            break
+        elif int(timestamp.milliseconds / TSO_protocol.time_base) == int(timestamp_now.milliseconds / TSO_protocol.time_base):
+            break
+        else:
+            continue
 
+    TSO_protocol.send(CAN_message_send)
+'''
