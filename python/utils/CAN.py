@@ -48,8 +48,6 @@ class Protocol:
         else:
             self.bustype = 'virtual'
 
-        self.pre_configure_CAN(bitrate=self.bitrate)
-
         prelude = '/home/debian/workspace/StationDePesage/utils/CAN/prelude.sh %s %d %d %.2f'
         prelude %= (self.interface, self.arbitration_id, self.bitrate, self.time_base)
         subprocess.run(prelude, shell=True, check=True)
