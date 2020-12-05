@@ -4,27 +4,13 @@
 # By:          Samuel Duclos
 # For:         My team.
 # Description: uARM control in Python for TSO_team.
-# TODO:      - parallelize processes:
-#              1) while True:
-#                  1) if CAN_message_received is not None:
-#                      1) timestamp = time.time()
-#                      2) if TSO_protocol.is_error(CAN_message_received):
-#                          1) CAN_message_send = TSO_protocol.set_error_message(CAN_message_received)
-#                          2) processes.kill() # (auto-cleanup should be ready)
-#                          3) continue
-#                      3) if CAN_message_received.arbitration_id == 1:
-#                          1) unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old) # Black puck is ready.
-#                          2) if unit is not None: # Black puck is ready.
-#                              1) uarm.set_weight_to_somewhere(vehicle, balance, sensor, sensor_threshold) # (done)
-#                              4) weight = balance.weigh()
-#                              3) CAN_message_send = TSO_protocol.parse_balance_output(weight, unit) # AND-masked divided weight to lower byte, with unit bit set.
-#                              4) uarm.set_weight_to_somewhere(balance, vehicle, sensor, sensor_threshold) # (done)
-#                      4) if (time.time() - timestamp) <= 0:
-#                          1) TSO_protocol.send(CAN_message_send)
+# TODO:        - parallelize processes
+#              - implement missing functionality
+#              - translate to C
 
 from __future__ import print_function
 from utils import balance, buzzer, CAN, sensor, uarm
-import datetime, time
+import datetime, multiprocessing, time
 
 CAN_interface_type, CAN_ID, CAN_bitrate, CAN_time_base = 'vcan', 3, 50000, 0.02 # 20 milliseconds between each station.
 uarm_tty_port, balance_tty_port = '/dev/ttyUSB1', '/dev/ttyUSB0'
@@ -68,12 +54,15 @@ while True:
 '''
 
 # CAN protocol implementation rewrite.
+CAN_message_received = None
+time_base_in_milliseconds = float(TSO_protocol.time_base) * 1000.0
+
 while True:
     CAN_message_received_old = CAN_message_received.copy()
     CAN_message_received = TSO_protocol.receive()
 
     timestamp = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc)
-    timestamp += datetime.datetime.timedelta(milliseconds=int(TSO_protocol.time_base * 1000) * (TSO_protocol.arbitration_id - 1))
+    timestamp += datetime.datetime.timedelta(milliseconds=int(time_base_in_milliseconds) * (TSO_protocol.arbitration_id - 1))
 
     while True:
         if CAN_message_received is not None: # Message seen on CAN bus.
@@ -89,11 +78,11 @@ while True:
                     CAN_message_send = TSO_protocol.parse_balance_output(weight, unit)
                     uarm.set_weight_to_somewhere(grab_position=balance_position, drop_position=vehicle_position, sensor=sensor, sensor_threshold=sensor_threshold)
         timestamp_now = datetime.datetime.fromtimestamp(time.time())
-        if int(timestamp.milliseconds / TSO_protocol.time_base) > int(timestamp_now.milliseconds / TSO_protocol.time_base):
+        if int(timestamp.milliseconds / time_base_in_milliseconds) > int(timestamp_now.milliseconds / time_base_in_milliseconds):
             CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
             processes.kill()
             break
-        elif int(timestamp.milliseconds / TSO_protocol.time_base) == int(timestamp_now.milliseconds / TSO_protocol.time_base):
+        elif int(timestamp.milliseconds / time_base_in_milliseconds) == int(timestamp_now.milliseconds / time_base_in_milliseconds):
             break
         else:
             continue

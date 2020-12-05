@@ -12,29 +12,17 @@ class Protocol:
     def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02):
         self.arbitration_id = arbitration_id
         self.interface_type = interface_type
-        self.interface = interface_type + str(0)
         self.time_base = time_base
-        self.is_extended_id = False
-        constructor_arguments = {'channel': 'socketcan'}
 
-        # Virtual CAN interface has no bitrate.
-        if self.interface_type != 'vcan':
-            bitrate = ' bitrate ' + str(bitrate)
-            self.bustype = self.interface
-            constructor_arguments['bitrate'] = bitrate
-        else:
-            self.bustype = 'virtual'
+        constructor_arguments = self.pre_configure_CAN(channel='socketcan', bitrate=bitrate, is_extended_id=False)
 
-        self.handle_exit_signals()
-        self.pre_configure_CAN(bitrate=bitrate)
-
-        constructor_arguments['bustype'] = self.bustype
         self.sending_bus = can.interface.Bus(**constructor_arguments)
         self.receiving_bus = can.interface.Bus(**constructor_arguments)
 
+        self.handle_exit_signals()
+
     def reset(self):
-        subprocess.run('/sbin/ip link set down ' + self.interface, shell=True, check=True)
-        subprocess.run('/sbin/ip link delete dev ' + self.interface + ' type ' + self.interface_type, shell=True, check=True)
+        subprocess.run('/home/debian/workspace/StationDePesage/utils/CAN/epilog.sh %s' % self.interface, shell=True, check=True)
         print('CAN closed...')
 
     def __del__(self):
@@ -45,18 +33,30 @@ class Protocol:
         signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
-    def pre_configure_CAN(self, bitrate=50000):
-        subprocess.run('/sbin/modprobe can can_bcm vcan', shell=True, check=True) # Ensure kernel modules are loaded.
+    def pre_configure_CAN(self, channel='socketcan', bitrate=50000, is_extended_id=False):
+        self.interface = self.interface_type + str(0)
+        self.channel = channel
+        self.bitrate = bitrate
+        self.is_extended_id = is_extended_id
 
-        # Setup interface if it doesn't exist.
-        if not os.path.exists('/sys/class/net/' + self.interface):
-            subprocess.run('/sbin/ip link add dev ' + self.interface + ' type ' + self.interface_type, shell=True, check=True)
+        constructor_arguments = {'channel': self.channel}
 
-        # Make sure the interface is up.
-        subprocess.run('/sbin/ip link set up ' + self.interface + ' type ' + self.interface_type + bitrate, shell=True, check=True)
+        # Virtual CAN interface has no bitrate.
+        if self.interface_type != 'vcan':
+            constructor_arguments['bitrate'] = self.bitrate
+            self.bustype = self.interface
+        else:
+            self.bustype = 'virtual'
 
-        # Increase sending buffer size.
-        subprocess.run('/sbin/ifconfig ' + self.interface + ' txqueuelen 1000', shell=True, check=True)
+        self.pre_configure_CAN(bitrate=self.bitrate)
+
+        prelude = '/home/debian/workspace/StationDePesage/utils/CAN/prelude.sh %s %d %d %.2f'
+        prelude %= (self.interface, self.arbitration_id, self.bitrate, self.time_base)
+        subprocess.run(prelude, shell=True, check=True)
+
+        constructor_arguments['bustype'] = self.bustype
+
+        return constructor_arguments
 
     def send(self, data):
         msg = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
@@ -80,10 +80,13 @@ class Protocol:
         return msg
 
     def condition_met(self):
-        msg = self.receive()
-        if msg is not None: # Message seen on CAN bus.
-            if msg.arbitration_id == 1: # SYNC received from control bridge.
-                time.sleep(self.time_base * (self.arbitration_id - 1)) # Wait for own turn.
-                return (msg.data[0] & 0x10) == 0x10 # TSO CAN protocol code for pick up object command.
-        return False
+        if self.interface_type == 'vcan':
+            return True
+        else:
+            msg = self.receive()
+            if msg is not None: # Message seen on CAN bus.
+                if msg.arbitration_id == 1: # SYNC received from control bridge.
+                    time.sleep(self.time_base * (self.arbitration_id - 1)) # Wait for own turn.
+                    return (msg.data[0] & 0x10) == 0x10 # TSO CAN protocol code for pick up object command.
+            return False
 

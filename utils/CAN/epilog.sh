@@ -4,11 +4,12 @@
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Post-deconfigures CAN.
-# Usage:       sudo bash utils/CAN/epilog.sh vcan
-#              ... where "vcan" is the INTERFACE_TYPE (one of "vcan" or "can").
+# Usage:       sudo bash utils/CAN/epilog.sh <INTERFACE_TYPE>
+# Example:     sudo bash utils/CAN/epilog.sh vcan
+# Arguments:   <INTERFACE_TYPE>: one of "vcan" or "can" (default is "vcan")
 
 # Parse and set arguments from command-line.
-INTERFACE_TYPE=$(echo "${1:-vcan}" | tr '[:lower:]' '[:upper:]')
+INTERFACE_TYPE=$(echo "${1:-vcan}" | tr '[:upper:]' '[:lower:]')
 INTERFACE="${INTERFACE_TYPE}0"
 
 # Destroy network interface.

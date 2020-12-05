@@ -9,7 +9,10 @@
 # Example:     sudo bash utils/internet/tap_internet.sh 192.168.7.1
 # Note:        Repeat at each reboot.
 
-/sbin/route add default gw 192.168.7.1
+# Parse and set arguments from command-line.
+GATEWAY="${1:-192.168.7.1}"
+
+/sbin/route add default gw $GATEWAY
 #/usr/sbin/ntpdate -b -s -u ie.pool.ntp.org
 echo 'nameserver 8.8.8.8' >> /etc/resolv.conf
 #echo 'nameserver 8.8.4.4' >> /etc/resolv.conf
