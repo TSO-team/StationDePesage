@@ -19,7 +19,7 @@
 void cleanup(void);
 
 int main(int argc, char *argv[]) {
-    const char *command = "/usr/bin/python3 /home/debian/workspace/StationDePesage/python/uARM.py"
+    const char *command = "/usr/bin/python3 /home/debian/workspace/StationDePesage/python/uARM.py";
     int status;
     pid_t pid;
     char CAN_input;
@@ -27,36 +27,44 @@ int main(int argc, char *argv[]) {
     while (1) {
         pid = fork();
 
-        getchar(); // Simulating factory reset.
-        while (1) {
-            CAN_input = getchar(); // CAN input goes here.
+        is_factory_reset = getchar(); // Simulating factory reset.
 
-            if (pid < 0) { // error
-                fputs("FORK ERROR!", stderr);
-                status = -1;
-            } else if (pid == 0) { // child
-                signal(SIGHUP, cleanup);
-                signal(SIGINT, cleanup);
-                signal(SIGTERM, cleanup);
-                execl(SHELL, SHELL, "-c", command, NULL);
-                _exit(EXIT_FAILURE); // Avoid flushing fully-buffered streams such as STDOUT.
-            } else { // parent
-                if (CAN_input == 'k') {
-                    break;
-                } else if (CAN_input == 'l') {
-                    if (waitpid(pid, &status, 0) != pid) {
-                        status = 1;
+        if (is_factory_reset == 'y') {
+            while (1) {
+                CAN_input = getchar(); // CAN input goes here.
+
+                if (pid < 0) { // error
+                    fputs("FORK ERROR!", stderr);
+                    status = -1;
+                } else if (pid == 0) { // child
+                    signal(SIGHUP, cleanup);
+                    signal(SIGINT, cleanup);
+                    signal(SIGTERM, cleanup);
+                    execl(SHELL, SHELL, "-c", command, NULL);
+                    _exit(EXIT_FAILURE); // Fun fact: Avoids flushing fully-buffered streams like STDOUT.
+                } else { // parent
+                    if (CAN_input == 'k') {
+                        break;
+                    } else if (CAN_input == 'l') {
+                        if (waitpid(pid, &status, 0) != pid) {
+                            status = 1;
+                        }
+                    } else {
+                        fputs("PROTOCOL ERROR!", stderr);
                     }
-                } else {
-                    fputs("PROTOCOL ERROR!", stderr);
                 }
-            }
 
-            puts(status); // CAN output goes there.
+                puts(status); // CAN output goes there.
+            }
+        } else {
+            cleanup();
+            break;
         }
 
         cleanup();
     }
+
+    exit(EXIT_SUCCESS);
 }
 
 void cleanup(void) {
