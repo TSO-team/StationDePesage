@@ -5,11 +5,11 @@
 # For:         My team.
 # Description: Tap internet on a Linux device without internet from an existing 
 #              wired connection to a Linux computer with internet access.
-# Usage:       sudo bash utils/internet/tap_internet.sh <GATEWAY>
-# Example:     sudo bash utils/internet/tap_internet.sh 192.168.7.1
+# Usage:       sudo bash bash/internet/tap_internet.sh <GATEWAY>
+# Example:     sudo bash bash/internet/tap_internet.sh 192.168.7.1
 # Note:        Repeat at each reboot.
 
-# Parse and set arguments from command-line.
+# Parse and set optional arguments from command-line.
 GATEWAY="${1:-192.168.7.1}"
 
 /sbin/route add default gw $GATEWAY
