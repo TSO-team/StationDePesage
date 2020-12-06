@@ -1,7 +1,8 @@
 # StationDePesage
 
 ## En développement.
-## Voir les autres répertoires du projet pour voir le rapport et mes contributions sur les autres stations...
+## Voir les autres répertoires du projet pour voir mes contributions sur le rapport et les autres stations de l'usine...
+## Ceci est un projet d'école. Je n'étais pas sensé toucher aux autres stations mais...
 
 Pour pouvoir s'intégrer au système, la station de pesage devra pouvoir au minimum :
 - Reconnaître et récupérer les messages CAN qui lui seront d'intérêts ;
