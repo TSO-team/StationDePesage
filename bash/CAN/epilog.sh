@@ -8,7 +8,7 @@
 # Example:     sudo bash bash/CAN/epilog.sh vcan
 # Arguments:   <INTERFACE_TYPE>: one of "vcan" or "can" (default is "vcan")
 
-# Parse and set arguments from command-line.
+# Parse and set optional arguments from command-line.
 INTERFACE_TYPE=$(echo "${1:-vcan}" | tr '[:upper:]' '[:lower:]')
 INTERFACE="${INTERFACE_TYPE}0"
 
