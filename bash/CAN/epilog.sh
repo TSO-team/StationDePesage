@@ -4,8 +4,8 @@
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Post-deconfigures CAN.
-# Usage:       sudo bash utils/CAN/epilog.sh <INTERFACE_TYPE>
-# Example:     sudo bash utils/CAN/epilog.sh vcan
+# Usage:       sudo bash bash/CAN/epilog.sh <INTERFACE_TYPE>
+# Example:     sudo bash bash/CAN/epilog.sh vcan
 # Arguments:   <INTERFACE_TYPE>: one of "vcan" or "can" (default is "vcan")
 
 # Parse and set arguments from command-line.
