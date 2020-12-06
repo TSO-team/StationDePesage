@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        utils/uarm.py
+# File:        python/utils/uarm.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: uARM control in Python for TSO_team.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        utils/buzzer.py
+# File:        python/utils/buzzer.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Funky town with uARM buzzer.

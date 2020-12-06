@@ -1,4 +1,7 @@
-
+// File:        c/utils/GPIO.cpp
+// By:          Samuel Duclos
+// For:         My team.
+// Description: GPIO control on Linux in C++.
 
 #include <iostream>
 #include <fstream>
@@ -30,7 +33,7 @@ GPIO::GPIO(int number) {
     this->name = string(s.str());
     this->path = GPIO_PATH + this->name + "/";
     // this->exportGPIO();
-	  usleep(250000); // Give Linux enough time to set up the sysfs structure (250ms).
+    usleep(250000); // Give Linux enough time to set up the sysfs structure (250ms).
 }
 
 int GPIO::write(string path, string filename, string value) {
@@ -39,7 +42,7 @@ int GPIO::write(string path, string filename, string value) {
 
     if (!fs.is_open()){
         perror("GPIO: write failed to open file ");
-	      return -1;
+        return -1;
     }
 
     fs << value;
@@ -226,37 +229,41 @@ int GPIO::waitForEdge(void) {
         return -1;
     }
 
-	  while (count<=1) {
+    while (count<=1) {
         i = epoll_wait(epollfd, &ev, 1, -1);
-		    if (i == -1) {
-		  	    perror("GPIO: Poll Wait fail");
-			      count = 5;
-		    } else count++;
-	  }
+        if (i == -1) {
+            perror("GPIO: Poll Wait fail");
+            count = 5;
+        } else count++;
+    }
 
     close(fd);
-    if (count==5) return -1;
-	  return 0;
+
+    if (count==5) {
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
 // Friend function.
 void* threadedPoll(void *value) {
     GPIO *gpio = static_cast<GPIO*>(value);
     while(gpio->threadRunning) {
-		    gpio->callbackFunction(gpio->waitForEdge());
-		    usleep(gpio->debounceTime * 1000);
+        gpio->callbackFunction(gpio->waitForEdge());
+        usleep(gpio->debounceTime * 1000);
     }
 
     return 0;
 }
 
 int GPIO::waitForEdge(CallbackType callback) {
-	  this->threadRunning = true;
-  	this->callbackFunction = callback;
+    this->threadRunning = true;
+    this->callbackFunction = callback;
     if (pthread_create(&this->thread, NULL, &threadedPoll, static_cast<void*>(this))) {
-      	perror("GPIO: Failed to create the poll thread");
-    	  this->threadRunning = false;
-    	  return -1;
+        perror("GPIO: Failed to create the poll thread");
+        this->threadRunning = false;
+        return -1;
     }
     return 0;
 }

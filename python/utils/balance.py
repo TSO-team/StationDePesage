@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        utils/balance.py
+# File:        python/utils/balance.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Outputs current weight from balance.

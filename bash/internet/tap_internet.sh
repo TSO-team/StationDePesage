@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# File:        utils/internet/tap_internet.sh
+# File:        bash/internet/tap_internet.sh
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Tap internet on a Linux device without internet from an existing 

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
-# File:        uARM.py
+# File:        python/uARM.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: uARM control in Python for TSO_team.
-# TODO:        - parallelize processes
-#              - implement missing functionality
-#              - translate to C
+# TODO:        - implement missing functionality:
+#                  - merge fork with separated, monolithic payload:
+#                      - group payloads in a single-threaded, callable-from-command-line process
+#                      - Ensure C follows Python closely and vice-versa
+#                  - uARM scan (object detection is done)
+#                  - balance to CAN (balance currently sends its output to TTY which is grabbed but not parsed)
+#              - translate to C (see C)
 
 from __future__ import print_function
 from utils import balance, buzzer, CAN, sensor, uarm

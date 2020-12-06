@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# File:        utils/CAN/epilog.sh
+# File:        bash/CAN/epilog.sh
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Post-deconfigures CAN.

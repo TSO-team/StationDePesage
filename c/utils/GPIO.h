@@ -1,3 +1,8 @@
+// File:        c/utils/GPIO.h
+// By:          Samuel Duclos
+// For:         My team.
+// Description: GPIO control on Linux in C++.
+
 #ifndef GPIO_H_
 #define GPIO_H_
 

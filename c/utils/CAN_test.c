@@ -1,3 +1,10 @@
+// File:        c/utils/CAN_test.c
+// By:          Samuel Duclos
+// For:         My team.
+// Description: Simple CAN_test.
+// Usage:       sudo bash c/utils/CAN_test
+// Example:     sudo bash c/utils/CAN_test
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,16 +16,16 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
-int main(void) {
+int main(int argc, char *argv[]) {
     int s, nbytes;
     struct sockaddr_can addr;
     struct can_frame frame;
     struct ifreq ifr;
-    const char *ifname = "can0";
+    const char *ifname = "vcan0";
 
     if ((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-        perror("Error while opening socket");
-	      return -1;
+        fputs("Error while opening socket", stderr);
+        return -1;
     }
 
     strcpy(ifr.ifr_name, ifname);
@@ -28,15 +35,14 @@ int main(void) {
     printf("%s at index %d\n", ifname, ifr.ifr_ifindex);
 
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-	      perror("Error in socket bind");
-	      return -2;
+        fputs("Error in socket bind", stderr);
+        return -2;
     }
 
-    frame.can_id  = 0x123;
-    frame.can_dlc = 3;
-    frame.data[0] = 0x11;
-    frame.data[1] = 0x22;
-    frame.data[2] = 0x33;
+    frame.can_id  = 0x003; // Arbitration ID for weighing station is 0x003.
+    frame.can_dlc = 2;     // TSO_protocol says 2 bytes for everyone.
+    frame.data[0] = 0x48;  // Code for black puck is ready: run whole payload.
+    frame.data[1] = 0x00;  // Simulating empty weights.
     nbytes = write(s, &frame, sizeof(struct can_frame));
     printf("Wrote %d bytes\n", nbytes);
 

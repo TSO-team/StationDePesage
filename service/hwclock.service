@@ -1,3 +1,8 @@
+# File:        service/hwclock.service
+# By:          Samuel Duclos
+# For:         My team.
+# Description: Example I2C RTC clock service file.
+
 [Unit]
 Description=RTC
 Before=getty.target

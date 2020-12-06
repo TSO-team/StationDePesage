@@ -1,10 +1,9 @@
-# File:        c/main.c
-# By:          Samuel Duclos
-# For:         My team.
-# Description: uARM and balance control in C for TSO_team.
-# TODO:        - parallelize processes
-#              - implement missing functionality
-#              - translate from Python
+// File:        c/main.c
+// By:          Samuel Duclos
+// For:         My team.
+// Description: uARM and balance control in C for TSO_team.
+//              - finish Python (see Python)
+//              - translate from Python
 
 #include <signal.h>
 #include <stddef.h>

@@ -1,3 +1,9 @@
+// File:        c/utils/GPIO_test.cpp
+// By:          Samuel Duclos
+// For:         My team.
+// Description: GPIO control on Linux in C++.
+// Usage:       sudo bash c/utils/GPIO_test
+
 #include <iostream>
 #include <unistd.h>
 
@@ -24,8 +30,8 @@ int main(void) {
     // Fast write to GPIO 1 million times.
     outGPIO.streamOpen();
     for (int i=0; i<1000000; i++) {
-       outGPIO.streamWrite(HIGH);
-       outGPIO.streamWrite(LOW);
+        outGPIO.streamWrite(HIGH);
+        outGPIO.streamWrite(LOW);
     }
     outGPIO.streamClose();
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# File:        utils/CAN/prelude.sh
+# File:        bash/CAN/prelude.sh
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Post-deconfigures CAN.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        utils/CAN.py
+# File:        python/utils/CAN.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: TSO protocol for CAN bus.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        CAN_test.py
+# File:        python/CAN_test.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: CAN test in Python for TSO_team.

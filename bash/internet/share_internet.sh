@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# File:        utils/internet/share_internet.sh
+# File:        bash/internet/share_internet.sh
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Share internet through existing wired connection from a
