@@ -24,49 +24,45 @@ int main(int argc, char *argv[]) {
     pid_t pid;
     char CAN_input;
 
-    pid = fork();
-
     while (1) {
+        pid = fork();
+
+        getchar(); // Simulating factory reset.
         while (1) {
             CAN_input = getchar(); // CAN input goes here.
 
-            switch (pid) {
-                case -1: // error
-                    fputs("FORK ERROR!", stderr);
-                        status = -1;
-                        break;
-                case 0: // child
-                    signal(SIGHUP, cleanup);
-                    signal(SIGINT, cleanup);
-                    signal(SIGTERM, cleanup);
-                    execl(SHELL, SHELL, "-c", command, NULL);
-                    _exit(EXIT_FAILURE); // Avoid flushing fully-buffered streams such as STDOUT.
+            if (pid < 0) { // error
+                fputs("FORK ERROR!", stderr);
+                status = -1;
+            } else if (pid == 0) { // child
+                signal(SIGHUP, cleanup);
+                signal(SIGINT, cleanup);
+                signal(SIGTERM, cleanup);
+                execl(SHELL, SHELL, "-c", command, NULL);
+                _exit(EXIT_FAILURE); // Avoid flushing fully-buffered streams such as STDOUT.
+            } else { // parent
+                if (CAN_input == 'k') {
                     break;
-                default: // parent
-                    switch (CAN_input) {
-                        case 'k':
-                            fputs("Killing child!", stderr);
-                            kill(pid, SIGTERM);
-                            sleep(3);
-                            break;
-                        case 'l':
-                            if (waitpid(pid, &status, 0) != pid) {
-                                status = 1;
-                            }
-                            break;
-                        default:
-                            fputs("PROTOCOL ERROR!", stderr)
-                            break;
+                } else if (CAN_input == 'l') {
+                    if (waitpid(pid, &status, 0) != pid) {
+                        status = 1;
                     }
+                } else {
+                    fputs("PROTOCOL ERROR!", stderr);
+                }
+            }
 
-                    break;
-
-            printf("%d", status); // CAN output goes there.
+            puts(status); // CAN output goes there.
         }
+
+        cleanup();
     }
 }
 
 void cleanup(void) {
     puts("Termination signal received! (do some complex cleanup...)");
+    fputs("Killing child!", stderr);
+    kill(pid, SIGTERM);
+    sleep(3);
     exit(0);
 }

@@ -10,7 +10,7 @@
 
 from __future__ import print_function
 from utils import balance, buzzer, CAN, sensor, uarm
-import datetime, multiprocessing, time
+import datetime, multiprocessing, os, time
 
 CAN_interface_type, CAN_ID, CAN_bitrate, CAN_time_base = 'vcan', 3, 50000, 0.02 # 20 milliseconds between each station.
 uarm_tty_port, balance_tty_port = '/dev/ttyUSB1', '/dev/ttyUSB0'
@@ -56,6 +56,17 @@ while True:
 # CAN protocol implementation rewrite.
 CAN_message_received = None
 time_base_in_milliseconds = float(TSO_protocol.time_base) * 1000.0
+
+'''
+ppid = os.getpid()
+return_value = os.fork()
+pid = os.getpid()
+
+if return_value is 0: # child
+    payload()
+else: # parent
+    CAN_loop()
+'''
 
 while True:
     CAN_message_received_old = CAN_message_received.copy()
