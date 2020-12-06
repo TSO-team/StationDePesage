@@ -4,14 +4,14 @@
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Post-deconfigures CAN.
-# Usage:       sudo bash utils/CAN/prelude.sh <INTERFACE_TYPE> <ARBITRATION_ID> <BITRATE> <TIME_BASE>
-# Example:     sudo bash utils/CAN/prelude.sh vcan 3 50000 0.02
+# Usage:       sudo bash bash/CAN/prelude.sh <INTERFACE_TYPE> <ARBITRATION_ID> <BITRATE> <TIME_BASE>
+# Example:     sudo bash bash/CAN/prelude.sh vcan 3 50000 0.02
 # Arguments:   <INTERFACE_TYPE>: one of "vcan" or "can" (default is "vcan")
 #              <ARBITRATION_ID>: identifier for the local node (default is "3")
 #              <BITRATE>:        bitrate for CAN bus (default is "50000")
 #              <TIME_BASE>:      time base between each CAN node in seconds (default is 0.02)
 
-# Parse and set arguments from command-line.
+# Parse and set optional arguments from command-line.
 INTERFACE_TYPE=$(echo "${1:-vcan}" | tr '[:upper:]' '[:lower:]')
 ARBITRATION_ID="${2:-3}"
 BITRATE="${3:-50000}"
