@@ -5,7 +5,12 @@
 
 #include "vl6180x.h"
 #include "vl6180x_registers.h"
-#include <ch.h>
+
+#ifdef HAL_USE_I2C // Use STM32.
+    #include <ch.h>
+#else // Use Linux.
+    #include <unistd.h>
+#endif
 
 void vl6180x_init(vl6180x_t *dev, I2CDriver *i2c_dev, uint8_t address) {
     dev->i2c = i2c_dev;
@@ -25,7 +30,7 @@ uint8_t vl6180x_measure_distance(vl6180x_t *dev, uint8_t *out_mm) {
     // Wait for measurement ready.
     // do {status = vl6180x_read_register(dev, VL6180X_RESULT_INTERRUPT_STATUS_GPIO);
     // } while ((status & (1 << 2)) == 0);
-    chThdSleepMilliseconds(100);
+    usleep(100000); // 10ms
 
     // Read result.
     mm = vl6180x_read_register(dev, VL6180X_RESULT_RANGE_VAL);

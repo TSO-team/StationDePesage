@@ -4,6 +4,7 @@
 # By:          Samuel Duclos
 # For:         My team.
 # Description: uARM control in Python for TSO_team.
+# TODO:        Fix scan()
 
 from __future__ import print_function
 import pyuarm, signal, time
@@ -52,6 +53,25 @@ class UARM:
         self.set_position(position=drop_position)
         self.set_pump(on=False)
 
+    # Fix me.
+    def scan(self, sensor=None, sensor_threshold=0.5):
+        is_breaking = False
+        relative_x = int((0 - args.stride_x) / 2) * args.scan_x_displacement
+        relative_y = int((0 - args.stride_y) / 2) * args.scan_y_displacement
+        relative_z = int((0 - args.stride_z) / 2) * args.scan_z_displacement
+        position = {'x': relative_x, 'y': relative_y, 'z': relative_z, 'speed': args.speed, 'relative': True, 'wait': True}
+        uarm.set_position(position)
+
+        for k in range(0, args.scan_z_displacement, args.stride_z):
+            for j in range(0, args.scan_y_displacement, args.stride_y):
+                for i in range(0, args.scan_x_displacement, args.stride_x):
+                    position = {'x': i, 'y': j, 'z': k, 'speed': args.speed, 'relative': True, 'wait': True}
+                        uarm.grab(grab_position=position, sensor=sensor, sensor_threshold=sensor_threshold)
+                    if is_breaking:
+                        break
+                if is_breaking:
+                    break
+
     def reset(self):
         self.set_pump(on=False)
         self.set_position(position=self.initial_position)
@@ -63,7 +83,7 @@ class UARM:
 
     def handle_exit_signals(self):
         signal.signal(signal.SIGINT, self.reset) # Handles CTRL-C for clean up.
-        signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
+        signal.signal(signal.SIGHUP, self.reset) # Handles disconnected TTY for clean up.
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
     def set_weight_to_somewhere(self, grab_position=None, sensor=sensor, drop_position=None, sensor_threshold=0.5):

@@ -10,10 +10,13 @@
     #endif
 
     #include <stdint.h>
-    #include "hal.h"
 
     // Default sensor address after powerup.
     #define VL6180X_DEFAULT_ADDRESS 0x29
+
+    #ifdef HAL_USE_I2C // Use STM32.
+        #include "hal.h"
+    #endif
 
     typedef struct {
         I2CDriver *i2c;

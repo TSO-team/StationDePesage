@@ -18,7 +18,7 @@
 void cleanup(void);
 
 int main(int argc, char *argv[]) {
-    const char *command = "/usr/bin/python3 /home/debian/workspace/StationDePesage/python/uARM.py";
+    const char *command = "/usr/bin/python3 /home/debian/workspace/StationDePesage/python/uARM_payload.py";
     int status;
     pid_t pid;
     char CAN_input;
