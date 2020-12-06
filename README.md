@@ -1,7 +1,7 @@
 # StationDePesage
 
 ## En développement.
-## Voir les autres repositories pour voir plus de ma part...
+## Voir les autres répertoires du projet pour voir le rapport et mes contributions sur les autres stations...
 
 Pour pouvoir s'intégrer au système, la station de pesage devra pouvoir au minimum :
 - Reconnaître et récupérer les messages CAN qui lui seront d'intérêts ;
