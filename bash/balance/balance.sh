@@ -4,11 +4,11 @@
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Outputs current weight from balance to UART.
-# Usage:       sudo bash utils/balance.sh &
-# Example:     sudo bash utils/balance.sh &
+# Usage:       sudo bash bash/balance.sh &
+# Example:     sudo bash bash/balance.sh &
 
 if [ "$#" -ne 1 ]; then
-    echo "Usage:    sudo bash utils/balance.sh &"
+    echo "Usage:    sudo bash bash/balance.sh &"
     exit
 else
     #TTY=/dev/ttyUSB0
