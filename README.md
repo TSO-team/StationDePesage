@@ -1,5 +1,8 @@
 # StationDePesage
 
+## En développement.
+## Voir les autres repositories pour voir plus de ma part...
+
 Pour pouvoir s'intégrer au système, la station de pesage devra pouvoir au minimum :
 - Reconnaître et récupérer les messages CAN qui lui seront d'intérêts ;
 - Décoder les messages qui lui permettront de savoir si elle doit être en arrêt ou en opération ;
