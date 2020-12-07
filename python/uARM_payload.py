@@ -8,7 +8,7 @@
 # TODO:          Output weight to parent.
 
 from __future__ import print_function
-from utils import sensor, uarm
+from utils import balance, buzzer, sensor, uarm
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.')
