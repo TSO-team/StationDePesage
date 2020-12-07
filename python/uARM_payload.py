@@ -3,7 +3,7 @@
 # File:          python/uARM_payload.py
 # By:            Samuel Duclos
 # For:           My team.
-# Description:   Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.
+# Description:   Do what the setup is made for...
 # For help:      python3 python/uARM_payload.py --help # <-- Use --help for help using this file like this. <--
 # TODO:          Output weight to parent.
 
@@ -66,11 +66,36 @@ def main():
     balance = balance.Balance(tty_port=balance_tty_port)
     uarm.reset()
 
-    uarm.set_weight_to_somewhere(grab_position=args.second_position, drop_position=args.third_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
+    uarm.set_weight_to_somewhere(initial_position=first_position, 
+                                 grab_position=second_position, 
+                                 sensor=sensor, 
+                                 drop_position=third_position, 
+                                 sensor_threshold=args.sensor_threshold, 
+                                 scan_x_displacement=args.scan_x_displacement, 
+                                 scan_y_displacement=args.scan_y_displacement, 
+                                 scan_z_displacement=args.scan_z_displacement, 
+                                 stride_x=args.stride_x, 
+                                 stride_y=args.stride_y, 
+                                 stride_z=args.stride_z)
+
     buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
+
     weight = balance.weigh()
-    uarm.set_weight_to_somewhere(grab_position=balance_position, drop_position=vehicle_position, sensor=sensor, sensor_threshold=sensor_threshold)
+
+    uarm.set_weight_to_somewhere(initial_position=first_position, 
+                                 grab_position=third_position, 
+                                 sensor=sensor, 
+                                 drop_position=second_position, 
+                                 sensor_threshold=args.sensor_threshold, 
+                                 scan_x_displacement=args.scan_x_displacement, 
+                                 scan_y_displacement=args.scan_y_displacement, 
+                                 scan_z_displacement=args.scan_z_displacement, 
+                                 stride_x=args.stride_x, 
+                                 stride_y=args.stride_y, 
+                                 stride_z=args.stride_z)
+
     buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
+
     print(weight) # Output weight to parent.
 
 if __name__ == '__main__':

@@ -4,7 +4,6 @@
 # By:          Samuel Duclos
 # For:         My team.
 # Description: uARM control in Python for TSO_team.
-# TODO:        Fix scan()
 
 from __future__ import print_function
 import pyuarm, signal, time
@@ -46,27 +45,30 @@ class UARM:
 
     def grab(self, grab_position=None, sensor=None, sensor_threshold=0.5):
         self.set_position(position=grab_position)
-        while not self.sensor.detect_object(sensor_threshold=sensor_threshold):
+        if self.sensor.detect_object(sensor_threshold=sensor_threshold):
             self.set_pump(on=True)
+            return True
+        else:
+            return False
 
     def drop(self, drop_position=None):
         self.set_position(position=drop_position)
         self.set_pump(on=False)
 
-    # Fix me.
-    def scan(self, sensor=None, sensor_threshold=0.5):
+    def scan(self, first_position=None, second_position=None, sensor=None, sensor_threshold=0.5, scan_x_displacement=5, scan_y_displacement=5, scan_z_displacement=0, stride_x=2, stride_y=2, stride_z=2):
         is_breaking = False
-        relative_x = int((0 - args.stride_x) / 2) * args.scan_x_displacement
-        relative_y = int((0 - args.stride_y) / 2) * args.scan_y_displacement
-        relative_z = int((0 - args.stride_z) / 2) * args.scan_z_displacement
-        position = {'x': relative_x, 'y': relative_y, 'z': relative_z, 'speed': args.speed, 'relative': True, 'wait': True}
-        uarm.set_position(position)
+        corner_x = int(second_position['x'] - first_position['x'])
+        corner_y = int(second_position['y'] - first_position['y'])
+        corner_z = int(second_position['z'] - first_position['z'])
 
-        for k in range(0, args.scan_z_displacement, args.stride_z):
-            for j in range(0, args.scan_y_displacement, args.stride_y):
-                for i in range(0, args.scan_x_displacement, args.stride_x):
-                    position = {'x': i, 'y': j, 'z': k, 'speed': args.speed, 'relative': True, 'wait': True}
-                        uarm.grab(grab_position=position, sensor=sensor, sensor_threshold=sensor_threshold)
+        if not uarm.grab(grab_position=second_position, sensor=sensor, sensor_threshold=0.5):
+            for k in range(corner_z, scan_z_displacement, stride_z):
+                for j in range(corner_y, scan_y_displacement, stride_y):
+                    for i in range(corner_x, scan_x_displacement, stride_x):
+                        scan_position = {'x': i, 'y': j, 'z': k, 'speed': second_position['speed'], 'relative': False, 'wait': True}
+                        if uarm.grab(grab_position=second_position, sensor=sensor, sensor_threshold=0.5):
+                            is_breaking = True
+                            break
                     if is_breaking:
                         break
                 if is_breaking:
@@ -86,8 +88,29 @@ class UARM:
         signal.signal(signal.SIGHUP, self.reset) # Handles disconnected TTY for clean up.
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
-    def set_weight_to_somewhere(self, grab_position=None, sensor=sensor, drop_position=None, sensor_threshold=0.5):
-        self.grab(grab_position=grab_position, sensor=sensor, sensor_threshold=sensor_threshold)
+    def set_weight_to_somewhere(self, 
+                                initial_position=None, 
+                                grab_position=None, 
+                                sensor=sensor, 
+                                drop_position=None, 
+                                sensor_threshold=0.5, 
+                                scan_x_displacement=5, 
+                                scan_y_displacement=5, 
+                                scan_z_displacement=0, 
+                                stride_x=2, 
+                                stride_y=2, 
+                                stride_z=0):
+        #self.grab(initial_position=initial_position, grab_position=grab_position, sensor=sensor, sensor_threshold=sensor_threshold)
+        self.scan(first_position=initial_position, 
+                  second_position=grab_position, 
+                  sensor=sensor, 
+                  sensor_threshold=sensor_threshold, 
+                  scan_x_displacement=scan_x_displacement, 
+                  scan_y_displacement=scan_y_displacement, 
+                  scan_z_displacement=scan_z_displacement, 
+                  stride_x=stride_x, 
+                  stride_y=stride_y, 
+                  stride_z=stride_z)
         self.drop(drop_position=drop_position)
         self.reset()
 
