@@ -11,6 +11,7 @@ from __future__ import print_function
 from utils import balance, buzzer, sensor, uarm
 
 def parse_args():
+    import argparse
     parser = argparse.ArgumentParser(description='Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.')
     parser.add_argument('--first-x-position', metavar='<first-x-position>', type=float, required=False, default=21.6, help='First position on X axis.')
     parser.add_argument('--first-y-position', metavar='<first-y-position>', type=float, required=False, default=80.79, help='First position on Y axis.')
@@ -45,7 +46,6 @@ def parse_args():
     return parser.parse_args()
 
 def main():
-    import argparse
     args = parse_args()
     print(vars(args))
 
