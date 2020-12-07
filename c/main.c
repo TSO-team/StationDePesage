@@ -23,8 +23,20 @@ static void cleanup(int signo) {
     sleep(3);
 }
 
+uint8_t read_weight_from_child(FILE *stream) {
+    char weight[10];
+    fscanf(stream, "%d", weight);
+    if (ferror(stream))
+        fputs("Error grabbing weight from stream!", stderr);
+    return (uint8_t)atoi(weight);
+}
+
 int main(int argc, char *argv[]) {
-    const char *command = "/usr/bin/python3 /home/debian/workspace/StationDePesage/python/uARM_payload.py";
+    FILE *stream = NULL;
+
+    // Hack letting me use system() in background while getting PID back through file.
+    const char *command = "/usr/bin/nohup /usr/bin/python3 /home/debian/workspace/StationDePesage/python/uARM_payload.py & /bin/echo $! > /tmp/pid";
+
     int pipe_to_parent[2], pipe_to_child[2], status;
     pid_t ppid = getpid(), pid, return_value, p;
     char CAN_input;
@@ -35,6 +47,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    /*
     if (pipe(pipe_to_parent) == -1) {
         fputs("PIPE TO PARENT ERROR!", stderr);
         exit(EXIT_FAILURE);
@@ -44,10 +57,15 @@ int main(int argc, char *argv[]) {
         fputs("PIPE TO CHILD ERROR!", stderr);
         exit(EXIT_FAILURE);
     }
+    */
 
-    return_value = fork();
-    pid = getpid();
+    //return_value = fork();
+    //pid = getpid();
 
+    if (!(stream = popen(command, "r")))
+        fputs("ERROR: Unable to open stream!", stderr);
+
+    /*
     if (return_value == (pid_t)-1) { // error
         fputs("FORK ERROR!", stderr);
         exit(EXIT_FAILURE);
@@ -76,12 +94,11 @@ int main(int argc, char *argv[]) {
         //execlp(command, ARGS_GO_HERE, NULL);
         execlp(command, NULL);
 
-        /* Find a way to run in child file.
-        close(pipe_to_child[1]); // Close remaining.
-        write(STDOUT_FILENO, "\n", 1);
-        close(pipe_to_parent[0]);
-        _exit(EXIT_SUCCESS);
-        */
+        // Find a way to run in child file.
+        //close(pipe_to_child[1]); // Close remaining.
+        //write(STDOUT_FILENO, "\n", 1);
+        //close(pipe_to_parent[0]);
+        //_exit(EXIT_SUCCESS);
 
         //return 127; // Reaching this means error.
         _exit(EXIT_FAILURE); // Fun fact: Avoids flushing fully-buffered streams like STDOUT.
@@ -125,4 +142,13 @@ int main(int argc, char *argv[]) {
 
         exit(EXIT_SUCCESS);
     }
+    */
+
+    weight = read_weight_from_child(stream);
+
+    if (!pclose(stream))
+        fputs("ERROR: Unable to close stream!", stderr);
+
+    exit(EXIT_SUCCESS);
 }
+
