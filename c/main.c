@@ -16,8 +16,6 @@
 
 #define SHELL "/bin/bash"
 
-static pid_t return_value; // Modify for execl() in child.
-
 static void cleanup(int signo) {
     fprintf(stderr, "Termination signal received (%d)! Cleaning up!\n", signo);
     fprintf(stderr, "Killing child!\n");
@@ -27,8 +25,8 @@ static void cleanup(int signo) {
 
 int main(int argc, char *argv[]) {
     const char *command = "/usr/bin/python3 /home/debian/workspace/StationDePesage/python/uARM_payload.py";
-    int pipefd[2], status;
-    pid_t ppid = getpid(), pid;
+    int pipe_to_parent[2], pipe_to_child[2], status;
+    pid_t ppid = getpid(), pid, return_value, p;
     char CAN_input;
     bool is_breaking = false;
 
@@ -37,19 +35,22 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if (pipe(pipefd) == -1) {
-        fputs("PIPE ERROR!", stderr);
+    if (pipe(pipe_to_parent) == -1) {
+        fputs("PIPE TO PARENT ERROR!", stderr);
+        exit(EXIT_FAILURE);
+    }
+
+    if (pipe(pipe_to_child) == -1) {
+        fputs("PIPE TO CHILD ERROR!", stderr);
         exit(EXIT_FAILURE);
     }
 
     return_value = fork();
     pid = getpid();
 
-    if (return_value == -1) { // error
+    if (return_value == (pid_t)-1) { // error
         fputs("FORK ERROR!", stderr);
-        status = -1;
-        //exit(EXIT_FAILURE);
-
+        exit(EXIT_FAILURE);
     } else if (!return_value) { // child
         if (signal(SIGTERM, cleanup) == SIG_ERR) {
             fputs("Error while setting SIGTERM signal handler!", stderr);
@@ -66,21 +67,28 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-        //execl(SHELL, SHELL, "-c", command, NULL);
-        //_exit(EXIT_FAILURE); // Fun fact: Avoids flushing fully-buffered streams like STDOUT.
-
-        close(pipefd[1]); // Close unused write end.
-        while (read(pipefd[0], &buf, 1) > 0) {
+        close(pipe_to_parent[1]); // Close unused write end.
+        close(pipe_to_child[0]); // Close unused read end.
+        while (read(pipe_to_parent[0], &buf, 1) > 0) {
             write(STDOUT_FILENO, &buf, 1);
         }
 
-        write(STDOUT_FILENO, "\n", 1);
-        close(pipefd[0]);
-        _exit(EXIT_SUCCESS);
+        //execlp(command, ARGS_GO_HERE, NULL);
+        execlp(command, NULL);
 
+        /* Find a way to run in child file.
+        close(pipe_to_child[1]); // Close remaining.
+        write(STDOUT_FILENO, "\n", 1);
+        close(pipe_to_parent[0]);
+        _exit(EXIT_SUCCESS);
+        */
+
+        //return 127; // Reaching this means error.
+        _exit(EXIT_FAILURE); // Fun fact: Avoids flushing fully-buffered streams like STDOUT.
     } else { // parent
-        close(pipefd[0]); // Close unused read end.
-        write(pipefd[1], argv[1], strlen(argv[1]));
+        close(pipe_to_parent[0]); // Close unused read end.
+        close(pipe_to_child[1]); // Close unused write end.
+        write(pipe_to_parent[1], argv[1], strlen(argv[1]));
 
         while (1) {
             is_factory_reset = getchar(); // Simulating factory reset.
@@ -104,18 +112,17 @@ int main(int argc, char *argv[]) {
             } else break;
         }
 
-        close(pipefd[1]); // Reader will see EOF.
-        //if (waitpid(pid, &status, 0) != pid) {
-        //   status = 1;
-        //}
-        wait(NULL); // Wait for child.
+        close(pipe_to_parent[1]); // Reader will see EOF.
+        if (waitpid(pid, &status, 0) != pid) {
+           status = 1;
+        }
+        close(pipe_to_child[0]); // Close remaining.
+
+        if (raise(SIGINT)) {
+            fputs("Error while raising SIGINT signal!", stderr);
+            return EXIT_FAILURE;
+        }
+
         exit(EXIT_SUCCESS);
     }
-
-    if (raise(SIGINT)) {
-        fputs("Error while raising SIGINT signal!", stderr);
-        return EXIT_FAILURE;
-    }
-
-    exit(EXIT_SUCCESS);
 }
