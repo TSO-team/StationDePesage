@@ -6,17 +6,16 @@
 # Description: uARM control in Python for TSO_team.
 # TODO:        - implement missing functionality:
 #                  - merge fork with separated, monolithic payload:
-#                      - group payloads in a single-threaded, callable-from-command-line process
 #                      - Ensure C follows Python closely and vice-versa
-#                  - uARM scan (object detection is done)
-#                - Grab weight from child through TTY.
+#                - grab weight from child through TTY.
 #                  - balance to CAN (balance currently sends its output to TTY which is grabbed but not parsed)
 #              - translate to C (see C)
+#              - trap SIGUSR1 and others as child
 # For help:      python3 python/uARM_payload.py --help # <-- Use --help for help using this file like this. <--
 
 from __future__ import print_function
-from utils import balance, buzzer, CAN, sensor, uarm
-import datetime, os, time
+from utils import CAN
+import datetime, os, signal, subprocess, time
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.')
@@ -57,38 +56,51 @@ def parse_args():
     parser.add_argument('--can-delay', metavar='<can-delay>', type=float, required=False, default=2.0, help='CAN delay.')
     return parser.parse_args()
 
+def uarm_payload():
+    os.execl('/usr/bin/python3', '/home/debian/workspace/StationDePesage/python/uARM_payload.py')
+    sys.exit(1)
+
+def CAN_loop():
+    TSO_protocol = CAN.Protocol(interface_type=args.interface_type, arbitration_id=args.can_id, bitrate=args.can_bitrate, time_base=args.can_time_base)
+    CAN_message_received = None
+    time_base_in_microseconds = float(TSO_protocol.time_base) * 10000000.0
+
+    while True:
+        CAN_message_received_old = CAN_message_received.copy()
+        CAN_message_received = TSO_protocol.receive()
+
+        timestamp = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc)
+        timestamp += datetime.timedelta(milliseconds=int(time_base_in_microseconds) * (TSO_protocol.arbitration_id - 1))
+
+        while True:
+            if CAN_message_received is not None: # Message seen on CAN bus.
+                if TSO_protocol.is_error(CAN_message_received):
+                    CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
+                    os.kill(pid, signal.SIGTERM)
+                    break
+                if CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
+                    unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
+                    if unit is not None:
+                        os.kill(pid, signal.SIGUSR1) # Run uARM payload.
+            timestamp_parsed = int(timestamp.microsecond / time_base_in_microseconds)
+            timestamp_now = datetime.datetime.fromtimestamp(time.time())
+            timestamp_now_parsed = int(timestamp_now.microsecond / time_base_in_microseconds)
+            if timestamp_parsed > timestamp_now_parsed:
+                CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
+                os.kill(pid, signal.SIGTERM)
+                break
+            elif timestamp_parsed == timestamp_now_parsed:
+                break
+            else:
+                continue
+
+        TSO_protocol.send(CAN_message_send)
+
 def main():
     import argparse
     args = parse_args()
     print(vars(args))
 
-    #initial_position = {'x': 21.6, 'y': 80.79, 'z': 186.11, 'speed': 150, 'relative': False, 'wait': True}
-    #balance_position = {'x': 313.93, 'y': 18.76, 'z': 178.67, 'speed': 150, 'relative': False, 'wait': True}
-    #vehicle_position = {'x': -232.97, 'y': 120.86, 'z': 126.59, 'speed': 150, 'relative': False, 'wait': True}
-    initial_position = {'x': args.first_x_position, 'y': args.first_y_position, 'z': args.first_z_position, 'speed': args.speed, 'relative': False, 'wait': True}
-    balance_position = {'x': args.second_x_position, 'y': args.second_y_position, 'z': args.second_z_position, 'speed': args.speed, 'relative': False, 'wait': True}
-    vehicle_position = {'x': args.third_x_position, 'y': args.third_y_position, 'z': args.third_z_position, 'speed': args.speed, 'relative': False, 'wait': True}
-
-    uarm = uarm.UARM(uarm_tty_port='/dev/ttyUSB1', 
-                     uart_delay=uart_delay, 
-                     initial_position=initial_position, 
-                     servo_attach_delay=servo_attach_delay, 
-                     set_position_delay=set_position_delay, 
-                     servo_detach_delay=servo_detach_delay, 
-                     pump_delay=pump_delay)
-
-    buzzer = buzzer.Buzzer(uarm=uarm.uarm, servo_detach_delay=uarm.servo_detach_delay, transition_delay=transition_delay)
-    sensor = sensor.VL6180X(i2c_port=sensor_i2c_port)
-    balance = balance.Balance(tty_port=balance_tty_port)
-
-    TSO_protocol = CAN.Protocol(interface_type=CAN_interface_type, 
-                                arbitration_id=CAN_ID, 
-                                bitrate=CAN_bitrate, 
-                                time_base=CAN_time_base)
-
-    uarm.reset()
-
-    '''
     ppid = os.getpid()
     return_value = os.fork()
     pid = os.getpid()
@@ -97,45 +109,6 @@ def main():
         uarm_payload()
     else: # parent
         CAN_loop()
-    '''
-
-    # CAN protocol implementation rewrite.
-    CAN_message_received = None
-    time_base_in_milliseconds = float(TSO_protocol.time_base) * 1000.0
-
-    while True:
-        CAN_message_received_old = CAN_message_received.copy()
-        CAN_message_received = TSO_protocol.receive()
-
-        timestamp = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc)
-        timestamp += datetime.datetime.timedelta(milliseconds=int(time_base_in_milliseconds) * (TSO_protocol.arbitration_id - 1))
-
-        while True:
-            if CAN_message_received is not None: # Message seen on CAN bus.
-                if TSO_protocol.is_error(CAN_message_received):
-                    CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
-                    processes.kill()
-                    break
-                if CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
-                    unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
-                    if unit is not None:
-                        uarm.set_weight_to_somewhere(grab_position=vehicle_position, drop_position=balance_position, sensor=sensor, sensor_threshold=sensor_threshold)
-                        weight = balance.weigh()
-                        CAN_message_send = TSO_protocol.parse_balance_output(weight, unit)
-                        uarm.set_weight_to_somewhere(grab_position=balance_position, drop_position=vehicle_position, sensor=sensor, sensor_threshold=sensor_threshold)
-            timestamp_parsed = int(timestamp.milliseconds / time_base_in_milliseconds)
-            timestamp_now = datetime.datetime.fromtimestamp(time.time())
-            timestamp_now_parsed = int(timestamp_now.milliseconds / time_base_in_milliseconds)
-            if timestamp_parsed > timestamp_now_parsed:
-                CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
-                processes.kill()
-                break
-            elif timestamp_parsed == timestamp_now_parsed:
-                break
-            else:
-                continue
-
-        TSO_protocol.send(CAN_message_send)
 
 if __name__ == '__main__':
     main()

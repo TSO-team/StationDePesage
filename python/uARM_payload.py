@@ -59,43 +59,24 @@ def main():
                      servo_attach_delay=args.servo_attach_delay, 
                      set_position_delay=args.set_position_delay, 
                      servo_detach_delay=args.servo_detach_delay, 
-                     pump_delay=args.pump_delay)
+                     pump_delay=args.pump_delay, 
+                     scan_x_displacement=args.scan_x_displacement, 
+                     scan_y_displacement=args.scan_y_displacement, 
+                     scan_z_displacement=args.scan_z_displacement, 
+                     stride_x=args.stride_x, 
+                     stride_y=args.stride_y, 
+                     stride_z=args.stride_z)
 
     buzzer = buzzer.Buzzer(uarm=uarm.uarm, servo_detach_delay=uarm.servo_detach_delay, transition_delay=transition_delay)
     sensor = sensor.VL6180X(i2c_port=sensor_i2c_port)
     balance = balance.Balance(tty_port=balance_tty_port)
     uarm.reset()
 
-    uarm.set_weight_to_somewhere(initial_position=first_position, 
-                                 grab_position=second_position, 
-                                 sensor=sensor, 
-                                 drop_position=third_position, 
-                                 sensor_threshold=args.sensor_threshold, 
-                                 scan_x_displacement=args.scan_x_displacement, 
-                                 scan_y_displacement=args.scan_y_displacement, 
-                                 scan_z_displacement=args.scan_z_displacement, 
-                                 stride_x=args.stride_x, 
-                                 stride_y=args.stride_y, 
-                                 stride_z=args.stride_z)
-
+    uarm.set_weight_to_somewhere(grab_position=second_position, drop_position=third_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
     buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
-
     weight = balance.weigh()
-
-    uarm.set_weight_to_somewhere(initial_position=first_position, 
-                                 grab_position=third_position, 
-                                 sensor=sensor, 
-                                 drop_position=second_position, 
-                                 sensor_threshold=args.sensor_threshold, 
-                                 scan_x_displacement=args.scan_x_displacement, 
-                                 scan_y_displacement=args.scan_y_displacement, 
-                                 scan_z_displacement=args.scan_z_displacement, 
-                                 stride_x=args.stride_x, 
-                                 stride_y=args.stride_y, 
-                                 stride_z=args.stride_z)
-
+    uarm.set_weight_to_somewhere(grab_position=third_position, drop_position=second_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
     buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
-
     print(weight) # Output weight to parent.
 
 if __name__ == '__main__':
