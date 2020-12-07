@@ -21,7 +21,7 @@ static pid_t return_value; // Modify for execl() in child.
 static void cleanup(int signo) {
     fprintf(stderr, "Termination signal received (%d)! Cleaning up!\n", signo);
     fprintf(stderr, "Killing child!\n");
-    kill(pid, SIGTERM);
+    kill(pid, SIGINT);
     sleep(3);
 }
 

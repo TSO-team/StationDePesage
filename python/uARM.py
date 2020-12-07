@@ -15,7 +15,7 @@
 
 from __future__ import print_function
 from utils import CAN
-import datetime, os, signal, subprocess, time
+import datetime, os, signal, sys, time
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.')
@@ -76,7 +76,7 @@ def CAN_loop():
             if CAN_message_received is not None: # Message seen on CAN bus.
                 if TSO_protocol.is_error(CAN_message_received):
                     CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
-                    os.kill(pid, signal.SIGTERM)
+                    os.kill(pid, signal.SIGINT)
                     break
                 if CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
                     unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
@@ -87,7 +87,7 @@ def CAN_loop():
             timestamp_now_parsed = int(timestamp_now.microsecond / time_base_in_microseconds)
             if timestamp_parsed > timestamp_now_parsed:
                 CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
-                os.kill(pid, signal.SIGTERM)
+                os.kill(pid, signal.SIGINT)
                 break
             elif timestamp_parsed == timestamp_now_parsed:
                 break
@@ -101,14 +101,64 @@ def main():
     args = parse_args()
     print(vars(args))
 
+    r, w = os.pipe()
+
     ppid = os.getpid()
     return_value = os.fork()
     pid = os.getpid()
 
     if return_value is 0: # child
-        uarm_payload()
+        os.close(r)
+        w = os.fdopen(w, 'w')
+        #os.execl('/usr/bin/python3', '/home/debian/workspace/StationDePesage/python/uARM_payload.py')
+        #sys.exit(1)
+        w.write('This message sent from child to parent is a test.')
+        w.close()
+        sys.exit(0)
     else: # parent
-        CAN_loop()
+        os.close(w)
+        r = os.fdopen(r)
+        string = r.read()
+        print('Parent received message:', string)
+
+        TSO_protocol = CAN.Protocol(interface_type=args.interface_type, arbitration_id=args.can_id, bitrate=args.can_bitrate, time_base=args.can_time_base)
+        CAN_message_received = None
+        time_base_in_microseconds = float(TSO_protocol.time_base) * 10000000.0
+
+        '''
+        while True:
+            CAN_message_received_old = CAN_message_received.copy()
+            CAN_message_received = TSO_protocol.receive()
+
+            timestamp = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc)
+            timestamp += datetime.timedelta(milliseconds=int(time_base_in_microseconds) * (TSO_protocol.arbitration_id - 1))
+
+            while True:
+                if CAN_message_received is not None: # Message seen on CAN bus.
+                    if TSO_protocol.is_error(CAN_message_received):
+                        CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
+                        os.kill(pid, signal.SIGINT)
+                        break
+                    if CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
+                        unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
+                        if unit is not None:
+                            os.kill(pid, signal.SIGUSR1) # Run uARM payload.
+                timestamp_parsed = int(timestamp.microsecond / time_base_in_microseconds)
+                timestamp_now = datetime.datetime.fromtimestamp(time.time())
+                timestamp_now_parsed = int(timestamp_now.microsecond / time_base_in_microseconds)
+                if timestamp_parsed > timestamp_now_parsed:
+                    CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
+                    os.kill(pid, signal.SIGINT)
+                    break
+                elif timestamp_parsed == timestamp_now_parsed:
+                    break
+                else:
+                    continue
+
+            TSO_protocol.send(CAN_message_send)
+        '''
+
+        sys.exit(0)
 
 if __name__ == '__main__':
     main()
