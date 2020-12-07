@@ -18,6 +18,7 @@ from utils import CAN
 import datetime, os, signal, sys, time
 
 def parse_args():
+    import argparse
     parser = argparse.ArgumentParser(description='Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.')
     parser.add_argument('--first-x-position', metavar='<first-x-position>', type=float, required=False, default=21.6, help='First position on X axis.')
     parser.add_argument('--first-y-position', metavar='<first-y-position>', type=float, required=False, default=80.79, help='First position on Y axis.')
@@ -57,7 +58,6 @@ def parse_args():
     return parser.parse_args()
 
 def main():
-    import argparse
     args = parse_args()
     print(vars(args))
 
@@ -81,7 +81,7 @@ def main():
         string = r.read()
         print('Parent received message:', string)
 
-        TSO_protocol = CAN.Protocol(interface_type=args.interface_type, arbitration_id=args.can_id, bitrate=args.can_bitrate, time_base=args.can_time_base)
+        TSO_protocol = CAN.Protocol(interface_type=args.can_interface_type, arbitration_id=args.can_id, bitrate=args.can_bitrate, time_base=args.can_time_base)
         CAN_message_received = None
         time_base_in_microseconds = float(TSO_protocol.time_base) * 10000000.0
 

@@ -23,7 +23,8 @@ class Protocol:
         self.handle_exit_signals()
 
     def reset(self):
-        subprocess.run('/home/debian/workspace/StationDePesage/utils/CAN/epilog.sh %s &' % self.interface)
+        epilog = '/bin/bash /home/debian/workspace/StationDePesage/bash/CAN/epilog.sh %s'
+        os.system(epilog % self.interface_type)
         print('CAN closed...')
 
     def __del__(self):
@@ -61,8 +62,8 @@ class Protocol:
         return constructor_arguments
 
     def pre_configure_CAN(self):
-        prelude = '/home/debian/workspace/StationDePesage/utils/CAN/prelude.sh %s %d %d %.2f'
-        subprocess.run(prelude % (self.interface, self.arbitration_id, self.bitrate, self.time_base))
+        prelude = '/bin/bash /home/debian/workspace/StationDePesage/bash/CAN/prelude.sh %s %d %d %.2f'
+        os.system(prelude % (self.interface_type, self.arbitration_id, self.bitrate, self.time_base))
 
     def set_CAN_protocol(self):
         self.ERROR_UNSPECIFIED = 0x80
