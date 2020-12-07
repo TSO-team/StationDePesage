@@ -56,46 +56,6 @@ def parse_args():
     parser.add_argument('--can-delay', metavar='<can-delay>', type=float, required=False, default=2.0, help='CAN delay.')
     return parser.parse_args()
 
-def uarm_payload():
-    os.execl('/usr/bin/python3', '/home/debian/workspace/StationDePesage/python/uARM_payload.py')
-    sys.exit(1)
-
-def CAN_loop():
-    TSO_protocol = CAN.Protocol(interface_type=args.interface_type, arbitration_id=args.can_id, bitrate=args.can_bitrate, time_base=args.can_time_base)
-    CAN_message_received = None
-    time_base_in_microseconds = float(TSO_protocol.time_base) * 10000000.0
-
-    while True:
-        CAN_message_received_old = CAN_message_received.copy()
-        CAN_message_received = TSO_protocol.receive()
-
-        timestamp = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc)
-        timestamp += datetime.timedelta(milliseconds=int(time_base_in_microseconds) * (TSO_protocol.arbitration_id - 1))
-
-        while True:
-            if CAN_message_received is not None: # Message seen on CAN bus.
-                if TSO_protocol.is_error(CAN_message_received):
-                    CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
-                    os.kill(pid, signal.SIGINT)
-                    break
-                if CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
-                    unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
-                    if unit is not None:
-                        os.kill(pid, signal.SIGUSR1) # Run uARM payload.
-            timestamp_parsed = int(timestamp.microsecond / time_base_in_microseconds)
-            timestamp_now = datetime.datetime.fromtimestamp(time.time())
-            timestamp_now_parsed = int(timestamp_now.microsecond / time_base_in_microseconds)
-            if timestamp_parsed > timestamp_now_parsed:
-                CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
-                os.kill(pid, signal.SIGINT)
-                break
-            elif timestamp_parsed == timestamp_now_parsed:
-                break
-            else:
-                continue
-
-        TSO_protocol.send(CAN_message_send)
-
 def main():
     import argparse
     args = parse_args()
