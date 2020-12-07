@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
                     puts(status); // CAN output goes there.
 
                     if (is_breaking) break;
+                }
             } else break;
         }
 
