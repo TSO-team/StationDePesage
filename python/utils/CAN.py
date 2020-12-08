@@ -66,10 +66,24 @@ class Protocol:
         os.system(prelude % (self.interface_type, self.arbitration_id, self.bitrate, self.time_base))
 
     def set_CAN_protocol(self):
+        self.OFF = 0x00
+        self.ON = 0x20
+        self.WAIT = 0x40
+        self.TEST = 0x60
         self.ERROR_UNSPECIFIED = 0x80
         self.ERROR_PROTOCOL = 0xA0
         self.ERROR_TIMEOUT = 0xC0
         self.ERROR_RETRANSMIT = 0xE0
+        self.NOTHING = 0x00
+        self.BLACK = 0x08
+        self.ORANGE = 0x10
+        self.OTHER = 0x18
+        self.A = 0x00
+        self.B = 0x02
+        self.C = 0x04
+        self.D = 0x06
+        self.GRAMS = 0x00
+        self.OZ = 0x01
 
     def is_error(self, CAN_message):
         return CAN_message.data[0] > 127
@@ -85,11 +99,31 @@ class Protocol:
 
         return CAN_message
 
-    def payload_received(self, CAN_message_received, CAN_message_received_old):
-        pass
+    def get_mode(self, CAN_message_received):
+        return CAN_message_received.data[0] & 0xE0
 
-    def parse_balance_output(self, weight, unit):
-        pass
+    def get_unit(self, CAN_message_received):
+        return CAN_message_received.data[0] & 0x01
+
+    def get_color(self, CAN_message_received):
+        return CAN_message_received_old.data[0] & 0x18
+
+    def atoi(self, a):
+        return int(a.strip())
+
+    def payload_received(self, CAN_message_received, CAN_message_received_old):
+        old_mode = self.get_mode(CAN_message_received_old)
+        mode = self.get_mode(CAN_message_received)
+
+        old_color = self.get_color(CAN_message_received_old)
+        color = self.get_color(CAN_message_received)
+
+        unit = self.get_unit(CAN_message_received)
+
+        if old_mode != mode and old_color != color and mode == self.ON and color == self.BLACK:
+            return unit
+        else:
+            return None
 
     def send(self, data):
         CAN_message_send = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
