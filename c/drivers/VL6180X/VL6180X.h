@@ -47,4 +47,14 @@
 
     typedef struct I2C_Bus i2c_bus;
     typedef struct I2C_Device i2c_device;
+
+    void init(i2c_bus i2c, uint16_t, uint16_t);
+    uint16_t range(void);
+    float read_lux(uint8_t);
+    uint8_t range_status(void);
+    void load_settings(void);
+    uint8_t write_8(i2c_device, uint16_t, uint8_t);
+    void write_16(i2c_device, uint16_t, uint8_t);
+    uint8_t read_8(uint16_t);
+    uint16_t read_16(uint16_t);
 #endif

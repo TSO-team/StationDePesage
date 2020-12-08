@@ -1,4 +1,4 @@
-// File:        c/utils/VL6081X.h
+// File:        c/drivers/merge/VL6081X.h
 // By:          Samuel Duclos
 // For:         My team.
 // Description: Header file for VL6180X (Time-of-Flight) sensor driver.

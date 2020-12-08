@@ -1,9 +1,9 @@
-// File:        c/utils/UART_test.c
+// File:        c/drivers/UART_test.c
 // By:          Samuel Duclos
 // For:         My team.
 // Description: Simple UART_test.
-// Usage:       sudo bash c/utils/UART_test <STRING>
-// Example:     sudo bash c/utils/UART_test "This is a test..."
+// Usage:       sudo bash c/drivers/UART_test <STRING>
+// Example:     sudo bash c/drivers/UART_test "This is a test..."
 // Arguments:   <STRING>: test string
 
 #include <stdio.h>

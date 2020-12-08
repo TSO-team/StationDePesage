@@ -6,16 +6,16 @@
 #include "VL6180X.h"
 #include <stdio.h>
 
-void init(i2c_bus i2c, uint16_t address) {
+void init(i2c_bus i2c, uint16_t address, uint16_t error) {
     i2c_device device;
 
-    if (address == -1)
+    if (address == error)
         address = VL6180X_DEFAULT_I2C_ADDR;
 
     device = I2CDevice(i2c, address);
 
     if (read_8(VL6180X_REG_IDENTIFICATION_MODEL_ID) != 0xB4) {
-        fprintf("RuntimeError! Could not find VL6180X, is it connected and powered?", stderr)
+        fprintf("RuntimeError! Could not find VL6180X, is it connected and powered?", stderr);
         load_settings();
         write_8(VL6180X_REG_SYSTEM_FRESH_OUT_OF_RESET, 0x00);
     }
@@ -40,14 +40,14 @@ uint16_t range(void) {
 float read_lux(uint8_t gain) {
     /* Read the lux (light value) from the sensor and return it.
        Must specify the gain value to use for the lux reading:
-    - ALS_GAIN_1 = 1x
-    - ALS_GAIN_1_25 = 1.25x
-    - ALS_GAIN_1_67 = 1.67x
-    - ALS_GAIN_2_5 = 2.5x
-    - ALS_GAIN_5 = 5x
-    - ALS_GAIN_10 = 10x
-    - ALS_GAIN_20 = 20x
-    - ALS_GAIN_40 = 40x
+       - ALS_GAIN_1 = 1x
+       - ALS_GAIN_1_25 = 1.25x
+       - ALS_GAIN_1_67 = 1.67x
+       - ALS_GAIN_2_5 = 2.5x
+       - ALS_GAIN_5 = 5x
+       - ALS_GAIN_10 = 10x
+       - ALS_GAIN_20 = 20x
+       - ALS_GAIN_40 = 40x
     */
 
     uint16_t lux;
@@ -153,7 +153,7 @@ void load_settings(void) {
     write_8(0x0011, 0x10); // Enables polling for 'New Sample ready'.
 
     // When measurement completes.
-    write_8(0x010A, 0x30); // Set the averaging sample period (compromise between lower noise and increased execution time)
+    write_8(0x010A, 0x30); // Set the averaging sample period (compromise between lower noise and increased execution time).
     write_8(0x003F, 0x46); // Sets the light and dark gain (upper nibble). Dark gain should not be changed.
     write_8(0x0031, 0xFF); // sets the # of range measurements after which auto-calibration of system is performed.
     write_8(0x0040, 0x63); // Set ALS integration time to 100ms.

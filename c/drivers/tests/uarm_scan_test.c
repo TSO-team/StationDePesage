@@ -1,9 +1,9 @@
-// File:        c/utils/uarm_scan_test.c
+// File:        c/drivers/uarm_scan_test.c
 // By:          Samuel Duclos
 // For:         My team.
 // Description: uARM scan test (output values on terminal)
-// Usage:       sudo bash c/utils/uarm_scan_test
-// Example:     sudo bash c/utils/uarm_scan_test
+// Usage:       sudo bash c/drivers/uarm_scan_test
+// Example:     sudo bash c/drivers/uarm_scan_test
 
 #include <stdio.h>
 

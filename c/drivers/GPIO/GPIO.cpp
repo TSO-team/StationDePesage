@@ -1,4 +1,4 @@
-// File:        c/utils/GPIO.cpp
+// File:        c/drivers/GPIO.cpp
 // By:          Samuel Duclos
 // For:         My team.
 // Description: GPIO control on Linux in C++.
@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <pthread.h>
-
 #include "GPIO.h"
 
 using namespace std;

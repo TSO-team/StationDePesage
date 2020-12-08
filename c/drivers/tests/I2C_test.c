@@ -1,9 +1,9 @@
-// File:        c/utils/I2C_test.c
+// File:        c/drivers/I2C_test.c
 // By:          Samuel Duclos
 // For:         My team.
 // Description: Simple I2C_test using ADXL345 device for testing.
-// Usage:       sudo bash c/utils/I2C_test
-// Example:     sudo bash c/utils/I2C_test
+// Usage:       sudo bash c/drivers/I2C_test
+// Example:     sudo bash c/drivers/I2C_test
 // TODO:        Implement for VL6180X Time-of-Flight sensor.
 
 #include <stdio.h>

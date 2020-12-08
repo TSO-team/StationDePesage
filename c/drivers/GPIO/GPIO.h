@@ -1,4 +1,4 @@
-// File:        c/utils/GPIO.h
+// File:        c/drivers/GPIO.h
 // By:          Samuel Duclos
 // For:         My team.
 // Description: GPIO control on Linux in C++.

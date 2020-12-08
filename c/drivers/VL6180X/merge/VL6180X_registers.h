@@ -1,4 +1,4 @@
-// File:        c/utils/VL6081X_registers.h
+// File:        c/drivers/merge/VL6081X_registers.h
 // By:          Samuel Duclos
 // For:         My team.
 // Description: Register definitions for VL6180X (Time-of-Flight) sensor driver.
