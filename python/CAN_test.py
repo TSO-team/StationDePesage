@@ -11,7 +11,7 @@ import time
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.', 
+    parser = argparse.ArgumentParser(description='Simple read/write CAN test using virtual CAN bus by default (see --help).', 
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser = CAN.add_CAN_args(parser)
     parser.add_argument('--can-message-byte-0', metavar='<can-message-byte-0>', type=int, required=False, default=0x40, help='First byte of test CAN message.')
