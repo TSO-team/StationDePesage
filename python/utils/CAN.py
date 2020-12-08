@@ -8,6 +8,14 @@
 from __future__ import print_function
 import can, os, signal, subprocess, time
 
+def add_CAN_args(parser):
+    parser.add_argument('--can-interface-type', metavar='<can-interface-type>', type=str, required=False, default='vcan', help='One of \'vcan\' or \'can\'.')
+    parser.add_argument('--can-id', metavar='<can-id>', type=int, required=False, default=3, help='The number of the station on the CAN network.')
+    parser.add_argument('--can-bitrate', metavar='<can-bitrate>', type=int, required=False, default=50000, help='Bitrate on CAN network.')
+    parser.add_argument('--can-time-base', metavar='<can-time-base>', type=float, required=False, default=0.02, help='Time base in seconds regulating the time lapse when each station can transmit in turn on the CAN network.')
+    parser.add_argument('--can-delay', metavar='<can-delay>', type=float, required=False, default=2.0, help='CAN delay.')
+    return parser.parse_args()
+
 class Protocol:
     def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02):
         self.initialize_default_arguments(channel='socketcan', is_extended_id=False)

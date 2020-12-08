@@ -9,23 +9,33 @@ from __future__ import print_function
 from utils import CAN
 import time
 
-# Modifiable variables.
-msg = [0x40, 0xAA]
-arbitration_id = 3
-interface_type = 'vcan'
-bitrate = 50000
-CAN_delay = 1 # seconds
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.', 
+                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = CAN.add_CAN_args(parser)
+    parser.add_argument('--can-message-byte-0', metavar='<can-message-byte-0>', type=int, required=False, default=0x40, help='First byte of test CAN message.')
+    parser.add_argument('--can-message-byte-1', metavar='<can-message-byte-1>', type=int, required=False, default=0xAA, help='Second byte of test CAN message.')
+    return parser.parse_args()
+
+def main():
+    args = parse_args()
+    print(vars(args))
+
+    TSO_protocol = CAN.Protocol(interface_type=args.can_interface_type, 
+                                arbitration_id=args.can_arbitration_id, 
+                                bitrate=args.can_bitrate, 
+                                delay=args.can_delay)
+
+    CAN_message_send = [args.can_message_byte_0, args.can_message_byte_1]
+
+    TSO_protocol.send(data=CAN_message_send)
+    time.sleep(args.can_delay)
+
+    CAN_message_receive = TSO_protocol.receive()
+    if CAN_message_receive is not None:
+        print(CAN_message_receive)
 
 if __name__ == '__main__':
-    TSO_protocol = CAN.Protocol(interface_type=interface_type, 
-                                arbitration_id=arbitration_id, 
-                                bitrate=bitrate, 
-                                delay=CAN_delay)
-
-    TSO_protocol.send(data=msg)
-    time.sleep(CAN_delay)
-
-    msg = TSO_protocol.receive()
-    if msg is not None:
-        print(msg)
+    main()
 
