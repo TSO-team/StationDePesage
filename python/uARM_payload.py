@@ -45,6 +45,24 @@ def parse_args():
     parser.add_argument('--transition-delay', metavar='<transition-delay>', type=float, required=False, default=5.0, help='Delay after using uARM buzzer signals the end of a phase and allows world to react.')
     return parser.parse_args()
 
+def payload(uarm=None, sensor=None, balance=None):
+    uarm.set_weight_to_somewhere(grab_position=second_position, drop_position=third_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
+    buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
+    weight = balance.weigh()
+    uarm.set_weight_to_somewhere(grab_position=third_position, drop_position=second_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
+    buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
+    print(weight) # Output weight to parent.
+    uarm.reset()
+
+def reset():
+    print('Factory reset!')
+
+def handle_exit_signals():
+    signal.signal(signal.SIGINT, reset) # Handles CTRL-C for clean up.
+    signal.signal(signal.SIGHUP, reset) # Handles stalled process for clean up.
+    signal.signal(signal.SIGTERM, reset) # Handles clean exits for clean up.
+    signal.signal(signal.SIGUSR1, payload) # Launches payload when requested from parent.
+
 def main():
     args = parse_args()
     print(vars(args))
@@ -72,12 +90,9 @@ def main():
     balance = balance.Balance(tty_port=balance_tty_port)
     uarm.reset()
 
-    uarm.set_weight_to_somewhere(grab_position=second_position, drop_position=third_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
-    buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
-    weight = balance.weigh()
-    uarm.set_weight_to_somewhere(grab_position=third_position, drop_position=second_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
-    buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
-    print(weight) # Output weight to parent.
+    handle_exit_signals()
+
+    payload(uarm=uarm, sensor=sensor, balance=balance)
 
 if __name__ == '__main__':
     main()

@@ -125,6 +125,9 @@ class Protocol:
         else:
             return None
 
+    def parse_balance_output(self, weight, unit):
+        pass
+
     def send(self, data):
         CAN_message_send = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
 
