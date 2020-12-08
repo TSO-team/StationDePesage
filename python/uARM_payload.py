@@ -45,52 +45,148 @@ def parse_args():
     parser.add_argument('--transition-delay', metavar='<transition-delay>', type=float, required=False, default=5.0, help='Delay after using uARM buzzer signals the end of a phase and allows world to react.')
     return parser.parse_args()
 
-def payload(uarm=None, sensor=None, balance=None):
-    uarm.set_weight_to_somewhere(grab_position=second_position, drop_position=third_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
-    buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
-    weight = balance.weigh()
-    uarm.set_weight_to_somewhere(grab_position=third_position, drop_position=second_position, sensor=sensor, sensor_threshold=args.sensor_threshold)
-    buzzer.play_funky_town(frequency_multiplier=buzzer_frequency_multiplier, duration_multiplier=buzzer_duration_multiplier)
-    print(weight) # Output weight to parent.
-    uarm.reset()
+class Payload:
+    def __init__(self, 
+                 initial_x_position=21.6, 
+                 initial_y_position=80.79, 
+                 initial_z_position=186.11, 
+                 vehicle_x_position=-232.97, 
+                 vehicle_y_position=120.86, 
+                 vehicle_z_position=126.59, 
+                 balance_x_position=313.93, 
+                 balance_y_position=18.76, 
+                 balance_z_position=178.67, 
+                 vehicle_position=None, 
+                 balance_position=None, 
+                 uarm_speed=150, 
+                 sensor_i2c_port=1, 
+                 sensor_threshold=0.5, 
+                 buzzer_frequency_multiplier=1.0, 
+                 buzzer_duration_multiplier=3.0, 
+                 uarm_tty_port=args.uarm_tty_port, 
+                 balance_tty_port=args.balance_tty_port, 
+                 uart_delay=2.0, 
+                 servo_attach_delay=5.0, 
+                 set_position_delay=5.0, 
+                 servo_detach_delay=5.0, 
+                 pump_delay=5.0, 
+                 transition_delay=5.0, 
+                 scan_x_displacement=5.0, 
+                 scan_y_displacement=5.0, 
+                 scan_z_displacement=0.0, 
+                 stride_x=2.0, 
+                 stride_y=2.0, 
+                 stride_z=0.0):
 
-def reset():
-    print('Factory reset!')
+        self.initial_x_position = initial_x_position
+        self.initial_y_position = initial_y_position
+        self.initial_z_position = initial_z_position
+        self.vehicle_x_position = vehicle_x_position
+        self.vehicle_y_position = vehicle_y_position
+        self.vehicle_z_position = vehicle_z_position
+        self.balance_x_position = balance_x_position
+        self.balance_y_position = balance_y_position
+        self.balance_z_position = balance_z_position
+        self.uarm_speed = uarm_speed
+        self.sensor_i2c_port = sensor_i2c_port
+        self.sensor_threshold = sensor_threshold
+        self.buzzer_frequency_multiplier = buzzer_frequency_multiplier
+        self.buzzer_duration_multiplier = buzzer_duration_multiplier
+        self.uarm_tty_port = uarm_tty_port
+        self.balance_tty_port = balance_tty_port
+        self.uart_delay = uart_delay
+        self.servo_attach_delay = servo_attach_delay
+        self.set_position_delay = set_position_delay
+        self.servo_detach_delay = servo_detach_delay
+        self.pump_delay = pump_delay
+        self.transition_delay = transition_delay
+        self.scan_x_displacement = scan_x_displacement
+        self.scan_y_displacement = scan_y_displacement
+        self.scan_z_displacement = scan_z_displacement
+        self.stride_x = stride_x
+        self.stride_y = stride_y
+        self.stride_z = stride_z
 
-def handle_exit_signals():
-    signal.signal(signal.SIGINT, reset) # Handles CTRL-C for clean up.
-    signal.signal(signal.SIGHUP, reset) # Handles stalled process for clean up.
-    signal.signal(signal.SIGTERM, reset) # Handles clean exits for clean up.
-    signal.signal(signal.SIGUSR1, payload) # Launches payload when requested from parent.
+        self.initial_position = {'x': self.initial_x_position, 'y': self.initial_y_position, 'z': self.initial_z_position, 'speed': self.uarm_speed, 'relative': False, 'wait': True}
+        self.vehicle_position = {'x': self.vehicle_x_position, 'y': self.vehicle_y_position, 'z': self.vehicle_z_position, 'speed': self.uarm_speed, 'relative': False, 'wait': True}
+        self.balance_position = {'x': self.balance_x_position, 'y': self.balance_y_position, 'z': self.balance_z_position, 'speed': self.uarm_speed, 'relative': False, 'wait': True}
+
+        self.uarm = uarm.UARM(uarm_tty_port=self.uarm_tty_port, 
+                              uart_delay=self.uart_delay, 
+                              initial_position=self.initial_position, 
+                              servo_attach_delay=self.servo_attach_delay, 
+                              set_position_delay=self.set_position_delay, 
+                              servo_detach_delay=self.servo_detach_delay, 
+                              pump_delay=self.pump_delay, 
+                              scan_x_displacement=self.scan_x_displacement, 
+                              scan_y_displacement=self.scan_y_displacement, 
+                              scan_z_displacement=self.scan_z_displacement, 
+                              stride_x=self.stride_x, 
+                              stride_y=self.stride_y, 
+                              stride_z=self.stride_z)
+
+        self.buzzer = buzzer.Buzzer(uarm=self.uarm.uarm, servo_detach_delay=self.uarm.servo_detach_delay, transition_delay=self.transition_delay)
+        self.sensor = sensor.VL6180X(i2c_port=self.sensor_i2c_port)
+        self.balance = balance.Balance(tty_port=self.balance_tty_port)
+        self.handle_exit_signals()
+        self.uarm.reset()
+
+    def uarm_payload(self, grab_position=None, drop_position=None):
+        self.uarm.set_weight_to_somewhere(grab_position=grab_position, drop_position=drop_position, sensor=self.sensor, sensor_threshold=self.sensor_threshold)
+
+    def buzzer_payload(self):
+        self.buzzer.play_funky_town(frequency_multiplier=self.buzzer_frequency_multiplier, duration_multiplier=self.buzzer_duration_multiplier)
+
+    def payload(self):
+        self.uarm_payload(grab_position=self.vehicle_position, drop_position=self.balance_position)
+        self.buzzer_payload()
+        weight = self.balance.weigh()
+        self.uarm_payload(grab_position=self.balance_position, drop_position=self.vehicle_position)
+        self.buzzer_payload()
+        print(weight) # Output weight to parent.
+
+    def reset(self):
+        self.uarm.reset()
+        print('Factory reset!')
+
+    def handle_exit_signals(self):
+        signal.signal(signal.SIGINT, self.reset) # Handles CTRL-C for clean up.
+        signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
+        signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
+        signal.signal(signal.SIGUSR1, self.payload) # Launches payload when requested from parent.
 
 def main():
     args = parse_args()
     print(vars(args))
 
-    first_position = {'x': args.first_x_position, 'y': args.first_y_position, 'z': args.first_z_position, 'speed': args.speed, 'relative': False, 'wait': True}
-    second_position = {'x': args.second_x_position, 'y': args.second_y_position, 'z': args.second_z_position, 'speed': args.speed, 'relative': False, 'wait': True}
-    third_position = {'x': args.third_x_position, 'y': args.third_y_position, 'z': args.third_z_position, 'speed': args.speed, 'relative': False, 'wait': True}
-
-    uarm = uarm.UARM(uarm_tty_port=args.uarm_tty_port, 
-                     uart_delay=args.uart_delay, 
-                     initial_position=args.first_position, 
-                     servo_attach_delay=args.servo_attach_delay, 
-                     set_position_delay=args.set_position_delay, 
-                     servo_detach_delay=args.servo_detach_delay, 
-                     pump_delay=args.pump_delay, 
-                     scan_x_displacement=args.scan_x_displacement, 
-                     scan_y_displacement=args.scan_y_displacement, 
-                     scan_z_displacement=args.scan_z_displacement, 
-                     stride_x=args.stride_x, 
-                     stride_y=args.stride_y, 
-                     stride_z=args.stride_z)
-
-    buzzer = buzzer.Buzzer(uarm=uarm.uarm, servo_detach_delay=uarm.servo_detach_delay, transition_delay=transition_delay)
-    sensor = sensor.VL6180X(i2c_port=sensor_i2c_port)
-    balance = balance.Balance(tty_port=balance_tty_port)
-    uarm.reset()
-
-    handle_exit_signals()
+    payload = Payload(initial_x_position=args.initial_x_position, 
+                      initial_y_position=args.initial_y_position, 
+                      initial_z_position=args.initial_z_position, 
+                      vehicle_x_position=args.vehicle_x_position, 
+                      vehicle_y_position=args.vehicle_y_position, 
+                      vehicle_z_position=args.vehicle_z_position, 
+                      balance_x_position=args.balance_x_position, 
+                      balance_y_position=args.balance_y_position, 
+                      balance_z_position=args.balance_z_position, 
+                      uarm_speed=args.uarm_speed, 
+                      sensor_i2c_port=args.sensor_i2c_port, 
+                      sensor_threshold=args.sensor_threshold, 
+                      buzzer_frequency_multiplier=args.buzzer_frequency_multiplier, 
+                      buzzer_duration_multiplier=args.buzzer_duration_multiplier, 
+                      uarm_tty_port=args.uarm_tty_port, 
+                      balance_tty_port=args.balance_tty_port, 
+                      uart_delay=args.uart_delay, 
+                      servo_attach_delay=args.servo_attach_delay, 
+                      set_position_delay=args.set_position_delay, 
+                      servo_detach_delay=args.servo_detach_delay, 
+                      pump_delay=args.pump_delay, 
+                      transition_delay=args.transition_delay, 
+                      scan_x_displacement=args.scan_x_displacement, 
+                      scan_y_displacement=args.scan_y_displacement, 
+                      scan_z_displacement=args.scan_z_displacement, 
+                      stride_x=args.stride_x, 
+                      stride_y=args.stride_y, 
+                      stride_z=args.stride_z)
 
     payload(uarm=uarm, sensor=sensor, balance=balance)
 
