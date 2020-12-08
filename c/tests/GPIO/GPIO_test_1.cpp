@@ -1,8 +1,8 @@
-// File:        c/drivers/GPIO_test.cpp
+// File:        c/tests/GPIO/GPIO_test_1.cpp
 // By:          Samuel Duclos
 // For:         My team.
 // Description: GPIO control on Linux in C++.
-// Usage:       sudo bash c/drivers/GPIO_test
+// Usage:       bash c/tests/GPIO/GPIO_test_1
 
 #include <iostream>
 #include <unistd.h>
@@ -16,7 +16,7 @@ int main(void) {
 
     // Flash LED 10 times for 10 seconds.
     outGPIO.setDirection(OUTPUT);
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
         outGPIO.setValue(HIGH);
         usleep(500000); //micro-second sleep 0.5 seconds
         outGPIO.setValue(LOW);
@@ -29,7 +29,7 @@ int main(void) {
     // Fast write to GPIO 1 million times.
     outGPIO.streamOpen();
 
-    for (int i=0; i<1000000; i++) {
+    for (int i = 0; i < 1000000; i++) {
         outGPIO.streamWrite(HIGH);
         outGPIO.streamWrite(LOW);
     }

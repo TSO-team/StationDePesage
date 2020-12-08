@@ -1,9 +1,8 @@
-// File:        c/drivers/CAN_test.c
-// By:          Samuel Duclos
-// For:         My team.
-// Description: Simple CAN_test.
-// Usage:       sudo bash c/drivers/CAN_test
-// Example:     sudo bash c/drivers/CAN_test
+// File:          c/tests/CAN/CAN_test_1.c
+// By:            Samuel Duclos
+// For:           My team.
+// Description:   Simple CAN_test_1.
+// Usage example: bash c/tests/CAN/CAN_test_1
 
 #include <stdio.h>
 #include <stdlib.h>

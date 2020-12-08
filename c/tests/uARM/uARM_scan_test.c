@@ -1,9 +1,9 @@
-// File:        c/drivers/uarm_scan_test.c
+// File:        c/tests/uARM/uARM_scan_test.c
 // By:          Samuel Duclos
 // For:         My team.
 // Description: uARM scan test (output values on terminal)
-// Usage:       sudo bash c/drivers/uarm_scan_test
-// Example:     sudo bash c/drivers/uarm_scan_test
+// Usage:       bash c/tests/uARM/uARM_scan_test
+// Example:     bash c/tests/uARM/uARM_scan_test
 
 #include <stdio.h>
 
@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
                 if is_breaking:
                     break
 */
+
 void uarm_scan_for_object(void) {
     /*
     for (unsigned char m = 0; m < 128; m++) {

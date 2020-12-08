@@ -4,14 +4,8 @@
 # By:          Samuel Duclos
 # For:         My team.
 # Description: uARM control in Python for TSO_team.
-# TODO:        - implement missing functionality:
-#                  - merge fork with separated, monolithic payload:
-#                      - Ensure C follows Python closely and vice-versa
-#                - grab weight from child through TTY.
-#                  - balance to CAN (balance currently sends its output to TTY which is grabbed but not parsed)
-#              - translate to C (see C)
-#              - trap SIGUSR1 and others as child
-# For help:      python3 python/uARM_payload.py --help # <-- Use --help for help using this file like this. <--
+# For help:    python3 python/uARM_payload.py --help # <-- Use --help for help using this file like this. <--
+# TODO:        - translate to C (see C)
 
 from __future__ import print_function
 from utils import CAN

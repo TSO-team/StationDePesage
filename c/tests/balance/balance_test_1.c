@@ -1,9 +1,8 @@
-// File:        c/drivers/balance_test.c
-// By:          Samuel Duclos
-// For:         My team.
-// Description: Outputs current weight from balance to UART.
-// Usage:       sudo bash c/drivers/balance &
-// Example:     sudo bash c/drivers/balance &
+// File:          c/tests/balance/balance_test_1.c
+// By:            Samuel Duclos
+// For:           My team.
+// Description:   Outputs current weight from balance to UART.
+// Usage example: bash c/tests/balance/balance_test_1
 
 #include <stdio.h>
 #include <string.h>

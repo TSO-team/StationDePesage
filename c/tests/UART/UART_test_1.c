@@ -1,9 +1,9 @@
-// File:        c/drivers/UART_test.c
+// File:        c/tests/UART/UART_test_1.c
 // By:          Samuel Duclos
 // For:         My team.
-// Description: Simple UART_test.
-// Usage:       sudo bash c/drivers/UART_test <STRING>
-// Example:     sudo bash c/drivers/UART_test "This is a test..."
+// Description: Simple UART_test_1.
+// Usage:       bash c/tests/UART/UART_test_1 <STRING>
+// Example:     bash c/tests/UART/UART_test_1 "This is a test..."
 // Arguments:   <STRING>: test string
 
 #include <stdio.h>
@@ -11,6 +11,7 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "../drivers/UART/uart.h"
 
 #define TTY "/dev/ttyACM0"
 
