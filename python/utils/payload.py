@@ -127,6 +127,11 @@ class Payload:
         self.handle_exit_signals()
         self.uarm.reset()
 
+    @classmethod
+    def get_weight_from_child(self, child):
+        weight = child.communicate()
+        return balance.parse_balance_output(weight)
+
     def uarm_payload(self, grab_position=None, drop_position=None):
         self.uarm.set_weight_to_somewhere(grab_position=grab_position, drop_position=drop_position, sensor=self.sensor, sensor_threshold=self.sensor_threshold)
 

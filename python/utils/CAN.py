@@ -122,14 +122,14 @@ class Protocol:
     def get_color(self, CAN_message_received):
         return CAN_message_received_old.data[0] & 0x18
 
-    def payload_received(self, CAN_message_received, CAN_message_received_old):
-        old_mode = self.get_mode(CAN_message_received_old)
-        mode = self.get_mode(CAN_message_received)
+    def payload_received(self):
+        old_mode = self.get_mode(self.CAN_message_received_old)
+        mode = self.get_mode(self.CAN_message_received)
 
-        old_color = self.get_color(CAN_message_received_old)
-        color = self.get_color(CAN_message_received)
+        old_color = self.get_color(self.CAN_message_received_old)
+        color = self.get_color(self.CAN_message_received)
 
-        unit = self.get_unit(CAN_message_received)
+        unit = self.get_unit(self.CAN_message_received)
 
         if old_mode != mode and old_color != color and mode == self.ON and color == self.BLACK:
             return unit

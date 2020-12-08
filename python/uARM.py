@@ -15,7 +15,7 @@
 
 from __future__ import print_function
 from utils import CAN
-from utils.payload import add_payload_args
+from utils.payload import add_payload_args, get_weight_from_child
 from utils.CAN import add_CAN_args
 import argparse, datetime, os, shlex, signal, subprocess, sys, time
 
@@ -44,8 +44,8 @@ def generate_timestamp(TSO_protocol):
     write_timeout = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
     return timestamp, read_timeout, write_timeout
 
-def request_weight_from_child_if_CAN_wants_it(TSO_protocol, CAN_message_received, CAN_message_received_old):
-    unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
+def request_weight_from_child_if_CAN_wants_it(TSO_protocol, pid):
+    unit = TSO_protocol.payload_received()
     if unit is not None:
         os.kill(pid, signal.SIGUSR1) # Request weights from child.
     return unit
@@ -60,7 +60,7 @@ def main():
                                 time_base=args.can_time_base, 
                                 number_of_stations=args.can_number_of_stations)
 
-    proc, pid = spawn_process_and_get_pid(args)
+    child, pid = spawn_process_and_get_pid(args)
     timestamp, read_timeout, write_timeout = generate_timestamp(TSO_protocol)
     is_factory_reset = False
 
@@ -72,12 +72,12 @@ def main():
                 TSO_protocol.set_error_message(error_code=TSO_protocol.ERROR_RETRANSMIT)
                 is_factory_reset = True
             elif is_factory_reset:
-                proc, pid = spawn_process_and_get_pid(args)
+                child, pid = spawn_process_and_get_pid(args)
                 timestamp, read_timeout, write_timeout = generate_timestamp(TSO_protocol)
                 is_factory_reset = False
             elif TSO_protocol.CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
                 timestamp, read_timeout, write_timeout = generate_timestamp(TSO_protocol)
-                unit = request_weight_from_child_if_CAN_wants_it(TSO_protocol, TSO_protocol.CAN_message_received, TSO_protocol.CAN_message_received_old)
+                unit = request_weight_from_child_if_CAN_wants_it(TSO_protocol, pid)
 
             timestamp_now, _, _ = generate_timestamp(TSO_protocol)
 
@@ -87,11 +87,11 @@ def main():
             elif timestamp_now > write_timeout:
                 TSO_protocol.send(TSO_protocol.CAN_message_send)
             else:
-                weight = proc.communicate()
+                weight = get_weight_from_child(child)
                 TSO_protocol.CAN_message_send = TSO_protocol.prepare_CAN_message_for_weight_transmission(weight, unit)
 
         if is_factory_reset:
-            proc.terminate()
+            child.terminate()
 
 if __name__ == '__main__':
     main()

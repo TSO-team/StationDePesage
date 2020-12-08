@@ -34,6 +34,8 @@ class Balance:
     def atoi(self, a):
         return int(a.strip())
 
-    def parse_balance_output(self, weight, unit):
-        pass
+    def parse_balance_output(self, weight):
+        weight = self.atoi()
+        weight_eight_bits_max = 0xFF if weight > 0xFF else weight
+        return bytearray([weight_eight_bits_max])
 
