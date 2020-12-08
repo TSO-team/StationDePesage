@@ -77,14 +77,6 @@ def generate_timestamp_and_parsed_timestamp(time_base_in_microseconds, TSO_proto
     timestamp_parsed = int(timestamp.microsecond / time_base_in_microseconds)
     return timestamp, timestamp_parsed
 
-def prepare_weight_for_CAN_transmit_if_received_from_child(proc, CAN_message_send, unit):
-    weight = proc.communicate()
-    if weight is not None:
-        CAN_message_send.data[1] = weight
-        CAN_message_send.data[0] &= 0xFE
-        CAN_message_send.data[0] |= unit
-    return CAN_message_send
-
 def request_weight_from_child_if_CAN_wants_it(TSO_protocol, CAN_message_received, CAN_message_received_old):
     unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
     if unit is not None:
@@ -96,44 +88,36 @@ def main():
     print(vars(args))
 
     TSO_protocol = CAN.Protocol(interface_type=args.can_interface_type, arbitration_id=args.can_id, bitrate=args.can_bitrate, time_base=args.can_time_base)
-    time_base_in_microseconds = float(TSO_protocol.time_base) * 10000000.0
-    CAN_message_received = None
     is_factory_reset = False
 
     proc, pid = spawn_process_and_get_pid(args)
-    timestamp, timestamp_parsed = generate_timestamp_and_parsed_timestamp(time_base_in_microseconds, TSO_protocol=TSO_protocol)
+    timestamp, timestamp_parsed = generate_timestamp_and_parsed_timestamp(TSO_protocol.time_base_in_microseconds, TSO_protocol=TSO_protocol)
 
     while True:
-        CAN_message_received_old = CAN_message_received.copy()
-        CAN_message_received = TSO_protocol.receive()
+        TSO_protocol.receive()
 
-        if is_factory_reset:
-            if CAN_message_received is not None: # Message seen on CAN bus.
-                if TSO_protocol.is_error(CAN_message_received):
-                    CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
-                else:
-                    proc, pid = spawn_process_and_get_pid(args)
-                    timestamp, timestamp_parsed = generate_timestamp_and_parsed_timestamp(time_base_in_microseconds, TSO_protocol=TSO_protocol)
-                    is_factory_reset = False
-                    break
-        else:
-            if CAN_message_received is not None: # Message seen on CAN bus.
-                if TSO_protocol.is_error(CAN_message_received):
-                    CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
-                    is_factory_reset = True
-                elif CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
-                    timestamp, timestamp_parsed = generate_timestamp_and_parsed_timestamp(time_base_in_microseconds, TSO_protocol=TSO_protocol)
-                    unit = request_weight_from_child_if_CAN_wants_it(TSO_protocol, CAN_message_received, CAN_message_received_old)
+        if CAN_message_received is not None: # Message seen on CAN bus.
+            if TSO_protocol.is_error(TSO_protocol.CAN_message_received):
+                TSO_protocol.set_error_message(TSO_protocol.CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
+                is_factory_reset = True
+            elif is_factory_reset:
+                proc, pid = spawn_process_and_get_pid(args)
+                timestamp, timestamp_parsed = generate_timestamp_and_parsed_timestamp(TSO_protocol.time_base_in_microseconds, TSO_protocol=TSO_protocol)
+                is_factory_reset = False
+            elif TSO_protocol.CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
+                timestamp, timestamp_parsed = generate_timestamp_and_parsed_timestamp(TSO_protocol.time_base_in_microseconds, TSO_protocol=TSO_protocol)
+                unit = request_weight_from_child_if_CAN_wants_it(TSO_protocol, TSO_protocol.CAN_message_received, TSO_protocol.CAN_message_received_old)
 
-            timestamp_now, timestamp_now_parsed = generate_timestamp_and_parsed_timestamp(time_base_in_microseconds)
+            timestamp_now, timestamp_now_parsed = generate_timestamp_and_parsed_timestamp(TSO_protocol.time_base_in_microseconds)
 
             if timestamp_parsed > timestamp_now_parsed:
-                CAN_message_send = TSO_protocol.set_error_message(CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
+                TSO_protocol.set_error_message(TSO_protocol.CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
                 is_factory_reset = True
             elif timestamp_parsed < timestamp_now_parsed:
-                CAN_message_send = prepare_weight_for_CAN_transmit_if_received_from_child(proc, CAN_message_send, unit)
+                weight = proc.communicate()
+                TSO_protocol.CAN_message_send = TSO_protocol.prepare_CAN_message_for_weight_transmission(TSO_protocol.CAN_message_send, weight)
 
-        TSO_protocol.send(CAN_message_send)
+        TSO_protocol.send(TSO_protocol.CAN_message_send.data)
 
         if is_factory_reset:
             proc.terminate()

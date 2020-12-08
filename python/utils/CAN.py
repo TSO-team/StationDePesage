@@ -46,6 +46,9 @@ class Protocol:
     def initialize_default_arguments(self, channel='socketcan', is_extended_id=False):
         self.channel = channel
         self.is_extended_id = is_extended_id
+        self.CAN_message_received_old = None
+        self.CAN_message_received = None
+        self.CAN_message_send = None
 
     def initialize_configurable_arguments(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02):
         self.interface_type = interface_type
@@ -54,6 +57,7 @@ class Protocol:
         self.time_base = time_base
 
     def initialize_inferred_arguments(self):
+        self.time_base_in_microseconds = float(self.time_base) * 10000000.0
         self.interface = self.interface_type + str(0)
 
         constructor_arguments = {'channel': self.channel}
@@ -96,16 +100,16 @@ class Protocol:
     def is_error(self, CAN_message):
         return CAN_message.data[0] > 127
 
-    def set_error_message(self, CAN_message, error_code=None):
+    def set_error_message(self, CAN_message_send, error_code=None):
+        self.CAN_message_send = CAN_message_send
+
         if error_code is None:
             error_code = self.ERROR_UNSPECIFIED
         else:
             error_code &= 0xE0
 
-        CAN_message.data[0] &= 0x1F
-        CAN_message.data[0] |= error_code
-
-        return CAN_message
+        self.CAN_message_send.data[0] &= 0x1F
+        self.CAN_message_send.data[0] |= error_code
 
     def get_mode(self, CAN_message_received):
         return CAN_message_received.data[0] & 0xE0
@@ -136,35 +140,41 @@ class Protocol:
     def parse_balance_output(self, weight, unit):
         pass
 
+    def prepare_CAN_message_for_weight_transmission(self, CAN_message_send, weight):
+        if weight is not None:
+            CAN_message_send.data[1] = weight
+            CAN_message_send.data[0] &= 0xFE
+            CAN_message_send.data[0] |= unit
+        return CAN_message_send
+
     def send(self, data):
-        CAN_message_send = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
+        self.CAN_message_send = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
 
         try:
-            self.sending_bus.send(CAN_message_send)
+            self.sending_bus.send(self.CAN_message_send)
             print('Message sent on {}.'.format(self.sending_bus.channel_info))
         except can.CanError:
             print('CAN ERROR WHILE SENDING MESSAGE!')
 
     def receive(self):
         try:
-            CAN_message_received = self.receiving_bus.recv(0.0) # Non-blocking read.
+            self.CAN_message_received_old = self.CAN_message_received.copy()
+            self.CAN_message_received = self.receiving_bus.recv(0.0) # Non-blocking read.
 
-            if CAN_message_received is not None:
+            if self.CAN_message_received is not None:
                 print('Message received on {}.'.format(self.receiving_bus.channel_info))
 
         except can.CanError:
             print('CAN ERROR WHILE RECEIVING MESSAGE!')
 
-        return CAN_message_received
-
     def condition_met(self): # Test mode.
         if self.interface_type == 'vcan':
             return True
         else:
-            CAN_message_received = self.receive()
-            if CAN_message_received is not None: # Message seen on CAN bus.
-                if CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
+            self.receive()
+            if self.CAN_message_received is not None: # Message seen on CAN bus.
+                if self.CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
                     time.sleep(self.time_base * (self.arbitration_id - 1)) # Wait for own turn.
-                    return (CAN_message_received.data[0] & 0x18) == 0x08 # TSO CAN protocol code for pick up object command.
+                    return (self.CAN_message_received.data[0] & 0x18) == 0x08 # TSO CAN protocol code for pick up object command.
             return False
 
