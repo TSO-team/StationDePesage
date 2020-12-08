@@ -1,5 +1,5 @@
-#ifndef RC_UART_H
-    #define RC_UART_H
+#ifndef UART_H
+    #define UART_H
 
     #ifdef __cplusplus
         extern "C" {
@@ -20,14 +20,14 @@
      *
      * @return     0 on success, -1 on failure */
 
-    int rc_uart_init(int bus, int baudrate, float timeout, int canonical_en, int stop_bits, int parity_en);
-    int rc_uart_close(int bus);
-    int rc_uart_get_fd(int bus);
-    int rc_uart_flush(int bus);
-    int rc_uart_write(int bus, uint8_t* data, size_t bytes);
-    int rc_uart_read_bytes(int bus, uint8_t* buf, size_t bytes);
-    int rc_uart_read_line(int bus, uint8_t* buf, size_t max_bytes);
-    int rc_uart_bytes_available(int bus);
+    int uart_init(int bus, int baudrate, float timeout, int canonical_en, int stop_bits, int parity_en);
+    int uart_close(int bus);
+    int uart_get_fd(int bus);
+    int uart_flush(int bus);
+    int uart_write(int bus, uint8_t* data, size_t bytes);
+    int uart_read_bytes(int bus, uint8_t* buf, size_t bytes);
+    int uart_read_line(int bus, uint8_t* buf, size_t max_bytes);
+    int uart_bytes_available(int bus);
 
     #ifdef __cplusplus
         }

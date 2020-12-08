@@ -31,20 +31,20 @@ int main(int argc, char *argv[]) {
     printf("\ntesting UART bus %d\n\n", bus);
 
     // Disable canonical (0), 1 stop bit (1), disable parity (0).
-    if(rc_uart_init(bus, BAUDRATE, TIMEOUT_S, 0,1,0)) {
-        printf("Failed to rc_uart_init%d\n", bus);
+    if(uart_init(bus, BAUDRATE, TIMEOUT_S, 0,1,0)) {
+        printf("Failed to uart_init%d\n", bus);
         return -1;
     }
 
     // Flush and Write
     printf("Sending  %d bytes: %s \n", bytes, test_str);
-    rc_uart_flush(bus);
-    rc_uart_write(bus, (uint8_t*)test_str, bytes);
+    uart_flush(bus);
+    uart_write(bus, (uint8_t*)test_str, bytes);
 
     // Read
     printf("reading bytes:\n");
     memset(buf,0,sizeof(buf));
-    ret = rc_uart_read_bytes(bus, buf, bytes);
+    ret = uart_read_bytes(bus, buf, bytes);
     if (ret<0) fprintf(stderr,"Error reading bus\n");
     else if (ret==0) printf("timeout reached, %d bytes read\n", ret);
     else printf("Received %d bytes: %s \n", ret, buf);
@@ -52,17 +52,17 @@ int main(int argc, char *argv[]) {
     // Now write again.
     printf("\n");
     printf("Sending  %d bytes: %s \n", bytes, test_str);
-    rc_uart_write(bus, (uint8_t*)test_str, bytes);
+    uart_write(bus, (uint8_t*)test_str, bytes);
 
     // read back as line
     printf("reading line:\n");
     memset(buf,0,sizeof(buf));
-    ret = rc_uart_read_line(bus, buf, sizeof(buf));
+    ret = uart_read_line(bus, buf, sizeof(buf));
     if (ret<0) fprintf(stderr,"Error reading bus\n");
     else if (ret==0) printf("timeout reached, %d bytes read\n", ret);
     else printf("Received %d bytes: %s \n", ret, buf);
 
     // close
-    rc_uart_close(bus);
+    uart_close(bus);
     return 0;
 }

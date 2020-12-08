@@ -12,15 +12,15 @@
 #define unlikely(x)	__builtin_expect (!!(x), 0)
 #define likely(x)	__builtin_expect (!!(x), 1)
 
-typedef struct rc_i2c_state_t {
+typedef struct i2c_state_t {
     /* data */
     uint8_t devAddr;
     int fd;
     int initialized;
     int lock;
-} rc_i2c_state_t;
+} i2c_state_t;
 
-static rc_i2c_state_t i2c[I2C_MAX_BUS+1];
+static i2c_state_t i2c[I2C_MAX_BUS+1];
 
 // local function
 static int __check_bus_range(int bus) {
@@ -32,13 +32,13 @@ static int __check_bus_range(int bus) {
     return 0;
 }
 
-int rc_i2c_init(int bus, uint8_t devAddr) {
+int i2c_init(int bus, uint8_t devAddr) {
     // sanity check
     if(unlikely(__check_bus_range(bus))) return -1;
 
     // if already initialized just set the device address
     if(i2c[bus].initialized){
-        return rc_i2c_set_device_address(bus, devAddr);
+        return i2c_set_device_address(bus, devAddr);
     }
 
     // lock the bus during this operation
@@ -51,13 +51,13 @@ int rc_i2c_init(int bus, uint8_t devAddr) {
     i2c[bus].fd = open(str, O_RDWR);
 
     if(i2c[bus].fd==-1){
-        fprintf(stderr,"ERROR: in rc_i2c_init, failed to open /dev/i2c\n");
+        fprintf(stderr,"ERROR: in i2c_init, failed to open /dev/i2c\n");
         return -1;
     }
 
     // set device adress
     if (unlikely(ioctl(i2c[bus].fd, I2C_SLAVE, devAddr) < 0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_init, ioctl slave address change failed\n");
+        fprintf(stderr,"ERROR: in i2c_init, ioctl slave address change failed\n");
         return -1;
     }
 
@@ -69,7 +69,7 @@ int rc_i2c_init(int bus, uint8_t devAddr) {
     return 0;
 }
 
-int rc_i2c_close(int bus) {
+int i2c_close(int bus) {
     if (unlikely(__check_bus_range(bus))) return -1;
     close(i2c[bus].fd);
     i2c[bus].devAddr = 0;
@@ -78,11 +78,11 @@ int rc_i2c_close(int bus) {
     return 0;
 }
 
-int rc_i2c_set_device_address(int bus, uint8_t devAddr) {
+int i2c_set_device_address(int bus, uint8_t devAddr) {
     // sanity check
     if (unlikely(__check_bus_range(bus))) return -1;
     if (unlikely(i2c[bus].initialized == 0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_set_device_address, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_set_device_address, bus not initialized yet\n");
         return -1;
     }
 
@@ -93,7 +93,7 @@ int rc_i2c_set_device_address(int bus, uint8_t devAddr) {
 
     // if not, change it with ioctl
     if (unlikely(ioctl(i2c[bus].fd, I2C_SLAVE, devAddr) < 0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_set_device_address, ioctl slave address change failed\n");
+        fprintf(stderr,"ERROR: in i2c_set_device_address, ioctl slave address change failed\n");
         return -1;
     }
 
@@ -101,17 +101,17 @@ int rc_i2c_set_device_address(int bus, uint8_t devAddr) {
     return 0;
 }
 
-int rc_i2c_read_byte(int bus, uint8_t regAddr, uint8_t *data) {
-    return rc_i2c_read_bytes(bus, regAddr, 1, data);
+int i2c_read_byte(int bus, uint8_t regAddr, uint8_t *data) {
+    return i2c_read_bytes(bus, regAddr, 1, data);
 }
 
-int rc_i2c_read_bytes(int bus, uint8_t regAddr, size_t count, uint8_t *data) {
+int i2c_read_bytes(int bus, uint8_t regAddr, size_t count, uint8_t *data) {
     int ret, old_lock;
 
     // sanity check
     if(unlikely(__check_bus_range(bus))) return -1;
     if(unlikely(i2c[bus].initialized==0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_read_bytes, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_read_bytes, bus not initialized yet\n");
         return -1;
     }
 
@@ -122,7 +122,7 @@ int rc_i2c_read_bytes(int bus, uint8_t regAddr, size_t count, uint8_t *data) {
     // write register to device
     ret = write(i2c[bus].fd, &regAddr, 1);
     if (unlikely(ret != 1)) {
-        fprintf(stderr,"ERROR: in rc_i2c_read_bytes, failed to write to bus\n");
+        fprintf(stderr,"ERROR: in i2c_read_bytes, failed to write to bus\n");
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -130,7 +130,7 @@ int rc_i2c_read_bytes(int bus, uint8_t regAddr, size_t count, uint8_t *data) {
     // then read the response
     ret = read(i2c[bus].fd, data, count);
     if (unlikely((size_t)ret != count)) {
-        fprintf(stderr,"ERROR: in rc_i2c_read_bytes, received %d bytes from device, expected %d\n", ret, (int)count);
+        fprintf(stderr,"ERROR: in i2c_read_bytes, received %d bytes from device, expected %d\n", ret, (int)count);
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -140,11 +140,11 @@ int rc_i2c_read_bytes(int bus, uint8_t regAddr, size_t count, uint8_t *data) {
     return ret;
 }
 
-int rc_i2c_read_word(int bus, uint8_t regAddr, uint16_t *data) {
-    return rc_i2c_read_words(bus, regAddr, 1, data);
+int i2c_read_word(int bus, uint8_t regAddr, uint16_t *data) {
+    return i2c_read_words(bus, regAddr, 1, data);
 }
 
-int rc_i2c_read_words(int bus, uint8_t regAddr, size_t count, uint16_t *data) {
+int i2c_read_words(int bus, uint8_t regAddr, size_t count, uint16_t *data) {
     int ret, old_lock;
     size_t i;
     char buf[count*2];
@@ -152,7 +152,7 @@ int rc_i2c_read_words(int bus, uint8_t regAddr, size_t count, uint16_t *data) {
     // sanity check
     if (unlikely(__check_bus_range(bus))) return -1;
     if (unlikely(i2c[bus].initialized == 0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_read_words, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_read_words, bus not initialized yet\n");
         return -1;
     }
 
@@ -163,7 +163,7 @@ int rc_i2c_read_words(int bus, uint8_t regAddr, size_t count, uint16_t *data) {
     // write register to device
     ret = write(i2c[bus].fd, &regAddr, 1);
     if (unlikely(ret != 1)) {
-        fprintf(stderr,"ERROR: in rc_i2c_read_words, failed to write to bus\n");
+        fprintf(stderr,"ERROR: in i2c_read_words, failed to write to bus\n");
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -171,7 +171,7 @@ int rc_i2c_read_words(int bus, uint8_t regAddr, size_t count, uint16_t *data) {
     // then read the response
     ret = read(i2c[bus].fd, buf, count * 2);
     if (ret != (signed)(count * 2)) {
-        fprintf(stderr,"ERROR: in rc_i2c_read_words, received %d bytes, expected %zu\n", ret, count*2);
+        fprintf(stderr,"ERROR: in i2c_read_words, received %d bytes, expected %zu\n", ret, count*2);
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -186,7 +186,7 @@ int rc_i2c_read_words(int bus, uint8_t regAddr, size_t count, uint16_t *data) {
     return 0;
 }
 
-int rc_i2c_write_bytes(int bus, uint8_t regAddr, size_t count, uint8_t* data) {
+int i2c_write_bytes(int bus, uint8_t regAddr, size_t count, uint8_t* data) {
     int ret, old_lock;
     size_t i;
     uint8_t writeData[count+1];
@@ -194,7 +194,7 @@ int rc_i2c_write_bytes(int bus, uint8_t regAddr, size_t count, uint8_t* data) {
     // sanity check
     if (unlikely(__check_bus_range(bus))) return -1;
     if (unlikely(i2c[bus].initialized == 0)){
-        fprintf(stderr,"ERROR: in rc_i2c_write_bytes, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_write_bytes, bus not initialized yet\n");
         return -1;
     }
 
@@ -210,7 +210,7 @@ int rc_i2c_write_bytes(int bus, uint8_t regAddr, size_t count, uint8_t* data) {
     ret = write(i2c[bus].fd, writeData, count+1);
     // write should have returned the correct # bytes written
     if (unlikely(ret != (signed)(count + 1))) {
-        fprintf(stderr,"ERROR in rc_i2c_write_bytes, bus wrote %d bytes, expected %zu\n", ret, count+1);
+        fprintf(stderr,"ERROR in i2c_write_bytes, bus wrote %d bytes, expected %zu\n", ret, count+1);
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -220,14 +220,14 @@ int rc_i2c_write_bytes(int bus, uint8_t regAddr, size_t count, uint8_t* data) {
     return 0;
 }
 
-int rc_i2c_write_byte(int bus, uint8_t regAddr, uint8_t data) {
+int i2c_write_byte(int bus, uint8_t regAddr, uint8_t data) {
     int ret, old_lock;
     uint8_t writeData[2];
 
     // sanity check
     if (unlikely(__check_bus_range(bus))) return -1;
     if (unlikely(i2c[bus].initialized == 0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_write_byte, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_write_byte, bus not initialized yet\n");
         return -1;
     }
 
@@ -244,7 +244,7 @@ int rc_i2c_write_byte(int bus, uint8_t regAddr, uint8_t data) {
 
     // write should have returned the correct # bytes written
     if (unlikely(ret != 2)) {
-        fprintf(stderr,"ERROR: in rc_i2c_write_byte, system write returned %d, expected 2\n", ret);
+        fprintf(stderr,"ERROR: in i2c_write_byte, system write returned %d, expected 2\n", ret);
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -254,7 +254,7 @@ int rc_i2c_write_byte(int bus, uint8_t regAddr, uint8_t data) {
     return 0;
 }
 
-int rc_i2c_write_words(int bus, uint8_t regAddr, size_t count, uint16_t* data) {
+int i2c_write_words(int bus, uint8_t regAddr, size_t count, uint16_t* data) {
     int ret,old_lock;
     size_t i;
     uint8_t writeData[(count*2)+1];
@@ -262,7 +262,7 @@ int rc_i2c_write_words(int bus, uint8_t regAddr, size_t count, uint16_t* data) {
     // sanity check
     if (unlikely(__check_bus_range(bus))) return -1;
     if (unlikely(i2c[bus].initialized == 0)){
-        fprintf(stderr,"ERROR: in rc_i2c_write_words, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_write_words, bus not initialized yet\n");
         return -1;
     }
 
@@ -279,7 +279,7 @@ int rc_i2c_write_words(int bus, uint8_t regAddr, size_t count, uint16_t* data) {
 
     ret = write(i2c[bus].fd, writeData, (count * 2) + 1);
     if (unlikely(ret != (signed)(count * 2) + 1)) {
-        fprintf(stderr,"ERROR: in rc_i2c_write_words, system write returned %d, expected %zu\n", ret, (count*2)+1);
+        fprintf(stderr,"ERROR: in i2c_write_words, system write returned %d, expected %zu\n", ret, (count*2)+1);
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -289,14 +289,14 @@ int rc_i2c_write_words(int bus, uint8_t regAddr, size_t count, uint16_t* data) {
     return 0;
 }
 
-int rc_i2c_write_word(int bus, uint8_t regAddr, uint16_t data) {
+int i2c_write_word(int bus, uint8_t regAddr, uint16_t data) {
     int ret,old_lock;
     uint8_t writeData[3];
 
     // sanity check
     if (unlikely(__check_bus_range(bus))) return -1;
     if (unlikely(i2c[bus].initialized == 0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_write_words, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_write_words, bus not initialized yet\n");
         return -1;
     }
 
@@ -311,7 +311,7 @@ int rc_i2c_write_word(int bus, uint8_t regAddr, uint16_t data) {
 
     ret = write(i2c[bus].fd, writeData, 3);
     if (unlikely(ret != 3)) {
-        fprintf(stderr,"ERROR: in rc_i2c_write_word, system write returned %d, expected 3\n", ret);
+        fprintf(stderr,"ERROR: in i2c_write_word, system write returned %d, expected 3\n", ret);
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -321,17 +321,17 @@ int rc_i2c_write_word(int bus, uint8_t regAddr, uint16_t data) {
     return 0;
 }
 
-int rc_i2c_send_byte(int bus, uint8_t data) {
-    return rc_i2c_send_bytes(bus, 1, &data);
+int i2c_send_byte(int bus, uint8_t data) {
+    return i2c_send_bytes(bus, 1, &data);
 }
 
-int rc_i2c_send_bytes(int bus, size_t count, uint8_t* data) {
+int i2c_send_bytes(int bus, size_t count, uint8_t* data) {
     int ret;
 
     // sanity check
     if (unlikely(__check_bus_range(bus))) return -1;
     if (unlikely(i2c[bus].initialized == 0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_send_bytes, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_send_bytes, bus not initialized yet\n");
         return -1;
     }
 
@@ -344,7 +344,7 @@ int rc_i2c_send_bytes(int bus, size_t count, uint8_t* data) {
 
     // write should have returned the correct # bytes written
     if(ret != (signed)count){
-        fprintf(stderr,"ERROR: in rc_i2c_send_bytes, system write returned %d, expected %zu\n", ret, count);
+        fprintf(stderr,"ERROR: in i2c_send_bytes, system write returned %d, expected %zu\n", ret, count);
         i2c[bus].lock = old_lock;
         return -1;
     }
@@ -354,7 +354,7 @@ int rc_i2c_send_bytes(int bus, size_t count, uint8_t* data) {
     return 0;
 }
 
-int rc_i2c_lock_bus(int bus) {
+int i2c_lock_bus(int bus) {
     int ret;
     if (unlikely(__check_bus_range(bus))) return -1;
     ret = i2c[bus].lock;
@@ -362,7 +362,7 @@ int rc_i2c_lock_bus(int bus) {
     return ret;
 }
 
-int rc_i2c_unlock_bus(int bus) {
+int i2c_unlock_bus(int bus) {
     int ret;
     if (unlikely(__check_bus_range(bus))) return -1;
     ret = i2c[bus].lock;
@@ -370,23 +370,23 @@ int rc_i2c_unlock_bus(int bus) {
     return ret;
 }
 
-int rc_i2c_get_lock(int bus) {
+int i2c_get_lock(int bus) {
     if (unlikely(__check_bus_range(bus))) return -1;
     return i2c[bus].lock;
 }
 
-int rc_i2c_get_fd(int bus) {
+int i2c_get_fd(int bus) {
     if (unlikely(__check_bus_range(bus))) return -1;
     if (unlikely(i2c[bus].initialized == 0)) {
-        fprintf(stderr,"ERROR: in rc_i2c_get_fd, bus not initialized yet\n");
+        fprintf(stderr,"ERROR: in i2c_get_fd, bus not initialized yet\n");
         return -1;
     }
 
     return i2c[bus].fd;
 }
 
-#ifdef RC_AUTOPILOT_EXT
-    int rc_i2c_read_data(int bus, uint8_t regAddr, size_t length, uint8_t *data) {
-        return rc_i2c_read_bytes(bus, regAddr, length, data);
+#ifdef AUTOPILOT_EXT
+    int i2c_read_data(int bus, uint8_t regAddr, size_t length, uint8_t *data) {
+        return i2c_read_bytes(bus, regAddr, length, data);
     }
 #endif
