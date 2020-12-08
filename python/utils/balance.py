@@ -31,3 +31,9 @@ class Balance:
         time.sleep(1)
         self.print()
 
+    def atoi(self, a):
+        return int(a.strip())
+
+    def parse_balance_output(self, weight, unit):
+        pass
+

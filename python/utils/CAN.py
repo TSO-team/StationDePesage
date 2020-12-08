@@ -13,13 +13,14 @@ def add_CAN_args(parser):
     parser.add_argument('--can-id', metavar='<can-id>', type=int, required=False, default=3, help='The number of the station on the CAN network.')
     parser.add_argument('--can-bitrate', metavar='<can-bitrate>', type=int, required=False, default=50000, help='Bitrate on CAN network.')
     parser.add_argument('--can-time-base', metavar='<can-time-base>', type=float, required=False, default=0.02, help='Time base in seconds regulating the time lapse when each station can transmit in turn on the CAN network.')
+    parser.add_argument('--can-number-of-stations', metavar='<can-number-of-stations>', type=int, required=False, default=4, help='Number of stations on the CAN network.')
     parser.add_argument('--can-delay', metavar='<can-delay>', type=float, required=False, default=2.0, help='CAN delay.')
     return parser.parse_args()
 
 class Protocol:
-    def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02):
+    def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02, number_of_stations=4):
         self.initialize_default_arguments(channel='socketcan', is_extended_id=False)
-        self.initialize_configurable_arguments(interface_type=interface_type, arbitration_id=arbitration_id, bitrate=bitrate, time_base=time_base)
+        self.initialize_configurable_arguments(interface_type=interface_type, arbitration_id=arbitration_id, bitrate=bitrate, time_base=time_base, number_of_stations=number_of_stations)
         constructor_arguments = self.initialize_inferred_arguments()
 
         self.pre_configure_CAN()
@@ -50,11 +51,12 @@ class Protocol:
         self.CAN_message_received = None
         self.CAN_message_send = None
 
-    def initialize_configurable_arguments(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02):
+    def initialize_configurable_arguments(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02, number_of_stations=4):
         self.interface_type = interface_type
         self.arbitration_id = arbitration_id
         self.bitrate = bitrate
         self.time_base = time_base
+        self.number_of_stations = number_of_stations
 
     def initialize_inferred_arguments(self):
         self.time_base_in_microseconds = float(self.time_base) * 10000000.0
@@ -120,9 +122,6 @@ class Protocol:
     def get_color(self, CAN_message_received):
         return CAN_message_received_old.data[0] & 0x18
 
-    def atoi(self, a):
-        return int(a.strip())
-
     def payload_received(self, CAN_message_received, CAN_message_received_old):
         old_mode = self.get_mode(CAN_message_received_old)
         mode = self.get_mode(CAN_message_received)
@@ -136,9 +135,6 @@ class Protocol:
             return unit
         else:
             return None
-
-    def parse_balance_output(self, weight, unit):
-        pass
 
     def prepare_CAN_message_for_weight_transmission(self, CAN_message_send, weight):
         if weight is not None:
@@ -166,15 +162,4 @@ class Protocol:
 
         except can.CanError:
             print('CAN ERROR WHILE RECEIVING MESSAGE!')
-
-    def condition_met(self): # Test mode.
-        if self.interface_type == 'vcan':
-            return True
-        else:
-            self.receive()
-            if self.CAN_message_received is not None: # Message seen on CAN bus.
-                if self.CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
-                    time.sleep(self.time_base * (self.arbitration_id - 1)) # Wait for own turn.
-                    return (self.CAN_message_received.data[0] & 0x18) == 0x08 # TSO CAN protocol code for pick up object command.
-            return False
 

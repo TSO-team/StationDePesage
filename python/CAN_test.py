@@ -25,14 +25,16 @@ def main():
     TSO_protocol = CAN.Protocol(interface_type=args.can_interface_type, 
                                 arbitration_id=args.can_arbitration_id, 
                                 bitrate=args.can_bitrate, 
-                                delay=args.can_delay)
+                                delay=args.can_delay
+                                number_of_stations=args.can_number_of_stations)
 
     CAN_message_send = [args.can_message_byte_0, args.can_message_byte_1]
 
     TSO_protocol.send(data=CAN_message_send)
     time.sleep(args.can_delay)
 
-    CAN_message_receive = TSO_protocol.receive()
+    TSO_protocol.receive()
+    CAN_message_receive = TSO_protocol.CAN_message_receive
     if CAN_message_receive is not None:
         print(CAN_message_receive)
 
