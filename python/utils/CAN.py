@@ -99,11 +99,11 @@ class Protocol:
         self.GRAMS = 0x00
         self.OZ = 0x01
 
-    def is_error(self, CAN_message):
-        return CAN_message.data[0] > 127
+    def is_error(self):
+        return self.CAN_message_received.data[0] > 127
 
-    def set_error_message(self, CAN_message_send, error_code=None):
-        self.CAN_message_send = CAN_message_send
+    def set_error_message(self, error_code=None):
+        self.CAN_message_send = self.CAN_message_received
 
         if error_code is None:
             error_code = self.ERROR_UNSPECIFIED
@@ -136,15 +136,17 @@ class Protocol:
         else:
             return None
 
-    def prepare_CAN_message_for_weight_transmission(self, CAN_message_send, weight):
+    def prepare_CAN_message_for_weight_transmission(self, weight, unit):
         if weight is not None:
-            CAN_message_send.data[1] = weight
-            CAN_message_send.data[0] &= 0xFE
-            CAN_message_send.data[0] |= unit
-        return CAN_message_send
+            self.CAN_message_send.data[1] = weight
+            self.CAN_message_send.data[0] &= 0xFE
+            self.CAN_message_send.data[0] |= unit
 
     def send(self, data):
-        self.CAN_message_send = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
+        if not isinstance(data, can.Message):
+            data = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
+
+        self.CAN_message_send = data
 
         try:
             self.sending_bus.send(self.CAN_message_send)

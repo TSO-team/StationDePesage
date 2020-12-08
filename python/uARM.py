@@ -35,21 +35,14 @@ def spawn_process_and_get_pid(args):
     time.sleep(3)
     return proc, proc.pid
 
-def generate_timestamp_and_parsed_timestamp(time_base_in_microseconds, TSO_protocol=None):
+def generate_timestamp(TSO_protocol):
     timestamp = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc)
-    if TSO_protocol is not None:
-        timestamp += datetime.timedelta(milliseconds=int(time_base_in_microseconds) * (TSO_protocol.arbitration_id - 1))
-    timestamp_parsed = int(timestamp.microsecond / time_base_in_microseconds)
-    return timestamp, timestamp_parsed
-
-def generate_timestamp_and_parsed_timestamp(TSO_protocol):
-    timestamp = datetime.datetime.fromtimestamp(time.time(), tz=datetime.timezone.utc)
-    timestamp_read_timeout = timestamp + datetime.timedelta(milliseconds=int(TSO_protocol.time_base_in_microseconds) * TSO_protocol.number_of_stations)
-    timestamp_write_timeout = timestamp + datetime.timedelta(milliseconds=int(TSO_protocol.time_base_in_microseconds) * (TSO_protocol.arbitration_id - 1))
-    timestamp_parsed = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
-    timestamp_read_timeout_parsed = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
-    timestamp_write_timeout_parsed = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
-    return timestamp, timestamp_parsed, timestamp_read_timeout, timestamp_read_timeout_parsed, timestamp_write_timeout, timestamp_write_timeout_parsed
+    read_timeout = timestamp + datetime.timedelta(milliseconds=int(TSO_protocol.time_base_in_microseconds) * TSO_protocol.number_of_stations)
+    write_timeout = timestamp + datetime.timedelta(milliseconds=int(TSO_protocol.time_base_in_microseconds) * (TSO_protocol.arbitration_id - 1))
+    timestamp = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
+    read_timeout = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
+    write_timeout = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
+    return timestamp, read_timeout, write_timeout
 
 def request_weight_from_child_if_CAN_wants_it(TSO_protocol, CAN_message_received, CAN_message_received_old):
     unit = TSO_protocol.payload_received(CAN_message_received, CAN_message_received_old)
@@ -61,37 +54,41 @@ def main():
     args = parse_args()
     print(vars(args))
 
-    TSO_protocol = CAN.Protocol(interface_type=args.can_interface_type, arbitration_id=args.can_id, bitrate=args.can_bitrate, time_base=args.can_time_base, number_of_stations=args.can_number_of_stations)
-    is_factory_reset = False
+    TSO_protocol = CAN.Protocol(interface_type=args.can_interface_type, 
+                                arbitration_id=args.can_id, 
+                                bitrate=args.can_bitrate, 
+                                time_base=args.can_time_base, 
+                                number_of_stations=args.can_number_of_stations)
 
     proc, pid = spawn_process_and_get_pid(args)
-    timestamp, timestamp_parsed, timestamp_read_timeout, timestamp_write_timeout = generate_timestamp_and_parsed_timestamp(TSO_protocol)
+    timestamp, read_timeout, write_timeout = generate_timestamp(TSO_protocol)
+    is_factory_reset = False
 
     while True:
         TSO_protocol.receive()
 
-        if CAN_message_received is not None: # Message seen on CAN bus.
-            if TSO_protocol.is_error(TSO_protocol.CAN_message_received):
-                TSO_protocol.set_error_message(TSO_protocol.CAN_message_received, error_code=TSO_protocol.ERROR_RETRANSMIT)
+        if TSO_protocol.CAN_message_received is not None: # Message seen on CAN bus.
+            if TSO_protocol.is_error():
+                TSO_protocol.set_error_message(error_code=TSO_protocol.ERROR_RETRANSMIT)
                 is_factory_reset = True
             elif is_factory_reset:
                 proc, pid = spawn_process_and_get_pid(args)
-                timestamp, timestamp_parsed, timestamp_read_timeout, timestamp_read_timeout_parsed, timestamp_write_timeout, timestamp_write_timeout_parsed = generate_timestamp_and_parsed_timestamp(TSO_protocol)
+                timestamp, read_timeout, write_timeout = generate_timestamp(TSO_protocol)
                 is_factory_reset = False
             elif TSO_protocol.CAN_message_received.arbitration_id == 1: # SYNC received from control bridge.
-                timestamp, timestamp_parsed, timestamp_read_timeout, timestamp_read_timeout_parsed, timestamp_write_timeout, timestamp_write_timeout_parsed = generate_timestamp_and_parsed_timestamp(TSO_protocol)
+                timestamp, read_timeout, write_timeout = generate_timestamp(TSO_protocol)
                 unit = request_weight_from_child_if_CAN_wants_it(TSO_protocol, TSO_protocol.CAN_message_received, TSO_protocol.CAN_message_received_old)
 
-            timestamp_now, timestamp_now_parsed, timestamp_now_read_timeout, timestamp_now_read_timeout_parsed, timestamp_now_write_timeout, timestamp_now_write_timeout_parsed = generate_timestamp_and_parsed_timestamp(TSO_protocol)
+            timestamp_now, _, _ = generate_timestamp(TSO_protocol)
 
-            if timestamp_now_parsed > timestamp_read_timeout_parsed:
-                TSO_protocol.set_error_message(TSO_protocol.CAN_message_received, error_code=TSO_protocol.ERROR_TIMESTAMP)
+            if timestamp_now > read_timeout:
+                TSO_protocol.set_error_message(error_code=TSO_protocol.ERROR_TIMESTAMP)
                 is_factory_reset = True
-            elif timestamp_now_parsed > timestamp_write_timeout_parsed:
-                TSO_protocol.send(TSO_protocol.CAN_message_send.data)
-            else timestamp_parsed < timestamp_now_parsed:
+            elif timestamp_now > write_timeout:
+                TSO_protocol.send(TSO_protocol.CAN_message_send)
+            else:
                 weight = proc.communicate()
-                TSO_protocol.CAN_message_send = TSO_protocol.prepare_CAN_message_for_weight_transmission(TSO_protocol.CAN_message_send, weight)
+                TSO_protocol.CAN_message_send = TSO_protocol.prepare_CAN_message_for_weight_transmission(weight, unit)
 
         if is_factory_reset:
             proc.terminate()
