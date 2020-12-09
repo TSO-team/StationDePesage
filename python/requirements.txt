@@ -27,5 +27,5 @@ rpi-ws281x==4.2.5
 RPi.GPIO==0.7.0
 scipy==1.1.0
 sysv-ipc==1.0.1
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 wrapt==1.12.1
