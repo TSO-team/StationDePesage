@@ -6,7 +6,7 @@
 # Description: TSO protocol for CAN bus.
 
 from __future__ import print_function
-import can, os, signal, subprocess, time
+import can.Message, drivers.CAN, os, signal, subprocess, time
 
 def add_CAN_args(parser):
     parser.add_argument('--can-interface-type', metavar='<can-interface-type>', type=str, required=False, default='vcan', help='One of \'vcan\' or \'can\'.')
@@ -17,18 +17,17 @@ def add_CAN_args(parser):
     parser.add_argument('--can-delay', metavar='<can-delay>', type=float, required=False, default=2.0, help='CAN delay.')
     return parser.parse_args()
 
-class Protocol:
+class Protocol(drivers.CAN.CAN_driver):
     def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02, number_of_stations=4):
-        self.initialize_default_arguments(channel='socketcan', is_extended_id=False)
-        self.initialize_configurable_arguments(interface_type=interface_type, arbitration_id=arbitration_id, bitrate=bitrate, time_base=time_base, number_of_stations=number_of_stations)
-        constructor_arguments = self.initialize_inferred_arguments()
+        self.initialize_default_arguments()
+        self.initialize_configurable_arguments(arbitration_id=arbitration_id, time_base=time_base, number_of_stations=number_of_stations)
+        self.initialize_inferred_arguments()
+        self.set_CAN_protocol()
 
         self.pre_configure_CAN()
 
-        self.sending_bus = can.interface.Bus(**constructor_arguments)
-        self.receiving_bus = can.interface.Bus(**constructor_arguments)
+        self.CAN_init_driver(interface_type=interface_type, bitrate=bitrate)
 
-        self.set_CAN_protocol()
         self.handle_exit_signals()
 
     def reset(self):
@@ -44,36 +43,18 @@ class Protocol:
         signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
-    def initialize_default_arguments(self, channel='socketcan', is_extended_id=False):
-        self.channel = channel
-        self.is_extended_id = is_extended_id
+    def initialize_default_arguments(self):
         self.CAN_message_received_old = None
         self.CAN_message_received = None
         self.CAN_message_send = None
 
-    def initialize_configurable_arguments(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02, number_of_stations=4):
-        self.interface_type = interface_type
+    def initialize_configurable_arguments(self, arbitration_id=3, time_base=0.02, number_of_stations=4):
         self.arbitration_id = arbitration_id
-        self.bitrate = bitrate
         self.time_base = time_base
         self.number_of_stations = number_of_stations
 
     def initialize_inferred_arguments(self):
         self.time_base_in_microseconds = float(self.time_base) * 10000000.0
-        self.interface = self.interface_type + str(0)
-
-        constructor_arguments = {'channel': self.channel}
-
-        # Virtual CAN interface has no bitrate.
-        if self.interface_type != 'vcan':
-            constructor_arguments['bitrate'] = self.bitrate
-            self.bustype = self.interface
-        else:
-            self.bustype = 'virtual'
-
-        constructor_arguments['bustype'] = self.bustype
-
-        return constructor_arguments
 
     def pre_configure_CAN(self):
         prelude = '/bin/bash /home/debian/workspace/StationDePesage/bash/CAN/prelude.sh %s %d %d %.2f'
@@ -151,25 +132,12 @@ class Protocol:
             self.CAN_message_send.data[0] |= unit
 
     def send(self, data):
-        if not isinstance(data, can.Message):
-            data = can.Message(arbitration_id=self.arbitration_id, data=data, is_extended_id=self.is_extended_id)
-
-        self.CAN_message_send = data
-
-        try:
-            self.sending_bus.send(self.CAN_message_send)
-            print('Message sent on {}.'.format(self.sending_bus.channel_info))
-        except can.CanError:
-            print('CAN ERROR WHILE SENDING MESSAGE!')
+        self.CAN_send(self.arbitration_id, data)
 
     def receive(self):
         try:
             self.CAN_message_received_old = self.CAN_message_received.copy()
-            self.CAN_message_received = self.receiving_bus.recv(0.0) # Non-blocking read.
-
-            if self.CAN_message_received is not None:
-                print('Message received on {}.'.format(self.receiving_bus.channel_info))
-
-        except can.CanError:
-            print('CAN ERROR WHILE RECEIVING MESSAGE!')
+            self.CAN_message_received = self.CAN_receive()
+        except AttributeError:
+            pass
 

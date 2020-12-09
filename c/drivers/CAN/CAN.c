@@ -5,7 +5,7 @@
 
 #include "CAN.h"
 
-void CAN_init(const char *ifname) {
+void CAN_init_driver(const char *ifname) {
     //const char *ifname = "vcan0";
     struct sockaddr_can addr;
     struct ifreq ifr;
