@@ -31,11 +31,3 @@ class Balance:
         time.sleep(1)
         self.print()
 
-    def atoi(self, a):
-        return int(a.strip())
-
-    def parse_balance_output(self, weight):
-        weight = self.atoi()
-        weight_eight_bits_max = 0xFF if weight > 0xFF else weight
-        return bytearray([weight_eight_bits_max])
-

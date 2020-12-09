@@ -6,10 +6,11 @@
 # Description: uARM control in Python for TSO_team.
 # For help:    python3 python/uARM_payload.py --help # <-- Use --help for help using this file like this. <--
 # TODO:        - translate to C (see C)
+#              - fix parser
 
 from __future__ import print_function
 from utils import CAN
-from utils.payload import add_payload_args, get_weight_from_child
+from utils.payload import add_payload_args
 from utils.CAN import add_CAN_args
 import argparse, datetime, os, shlex, signal, subprocess, sys, time
 
@@ -23,9 +24,9 @@ def parse_args():
     return parser.parse_args()
 
 def spawn_process_and_get_pid(args):
-    args = shlex.split(vars(args))
     python_command = '/usr/bin/python3 /home/debian/workspace/StationDePesage/python/uARM_payload.py'
-    proc = subprocess.Popen([python_command, args], shell=True)
+    #proc = subprocess.Popen([python_command, sys.argv[1:]], shell=True)
+    proc = subprocess.Popen([python_command], shell=True)
     time.sleep(3)
     return proc, proc.pid
 
@@ -34,8 +35,8 @@ def generate_timestamp(TSO_protocol):
     read_timeout = timestamp + datetime.timedelta(milliseconds=int(TSO_protocol.time_base_in_microseconds) * TSO_protocol.number_of_stations)
     write_timeout = timestamp + datetime.timedelta(milliseconds=int(TSO_protocol.time_base_in_microseconds) * (TSO_protocol.arbitration_id - 1))
     timestamp = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
-    read_timeout = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
-    write_timeout = int(timestamp.microsecond / TSO_protocol.time_base_in_microseconds)
+    read_timeout = int(read_timeout.microsecond / TSO_protocol.time_base_in_microseconds)
+    write_timeout = int(write_timeout.microsecond / TSO_protocol.time_base_in_microseconds)
     return timestamp, read_timeout, write_timeout
 
 def request_weight_from_child_if_CAN_wants_it(TSO_protocol, pid):
@@ -43,6 +44,10 @@ def request_weight_from_child_if_CAN_wants_it(TSO_protocol, pid):
     if unit is not None:
         os.kill(pid, signal.SIGUSR1) # Request weights from child.
     return unit
+
+def get_weight_from_child(TSO_protocol, child):
+    weight = child.communicate()
+    return TSO_protocol.parse_balance_output(weight)
 
 def main():
     args = parse_args()
@@ -81,7 +86,7 @@ def main():
             elif timestamp_now > write_timeout:
                 TSO_protocol.send(TSO_protocol.CAN_message_send)
             else:
-                weight = get_weight_from_child(child)
+                weight = get_weight_from_child(TSO_protocol, child)
                 TSO_protocol.CAN_message_send = TSO_protocol.prepare_CAN_message_for_weight_transmission(weight, unit)
 
         if is_factory_reset:

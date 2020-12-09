@@ -122,6 +122,14 @@ class Protocol:
     def get_color(self, CAN_message_received):
         return CAN_message_received_old.data[0] & 0x18
 
+    def atoi(self, a):
+        return int(a.strip())
+
+    def parse_balance_output(self, weight):
+        weight = self.atoi()
+        weight_eight_bits_max = 0xFF if weight > 0xFF else weight
+        return bytearray([weight_eight_bits_max])
+
     def payload_received(self):
         old_mode = self.get_mode(self.CAN_message_received_old)
         mode = self.get_mode(self.CAN_message_received)

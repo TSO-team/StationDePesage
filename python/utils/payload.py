@@ -59,8 +59,8 @@ class Payload:
                  sensor_threshold=0.5, 
                  buzzer_frequency_multiplier=1.0, 
                  buzzer_duration_multiplier=3.0, 
-                 uarm_tty_port=args.uarm_tty_port, 
-                 balance_tty_port=args.balance_tty_port, 
+                 uarm_tty_port='/dev/ttyUSB1', 
+                 balance_tty_port='/dev/ttyUSB0', 
                  uart_delay=2.0, 
                  servo_attach_delay=5.0, 
                  set_position_delay=5.0, 
@@ -126,11 +126,6 @@ class Payload:
         self.balance = balance.Balance(tty_port=self.balance_tty_port)
         self.handle_exit_signals()
         self.uarm.reset()
-
-    @classmethod
-    def get_weight_from_child(self, child):
-        weight = child.communicate()
-        return balance.parse_balance_output(weight)
 
     def uarm_payload(self, grab_position=None, drop_position=None):
         self.uarm.set_weight_to_somewhere(grab_position=grab_position, drop_position=drop_position, sensor=self.sensor, sensor_threshold=self.sensor_threshold)
