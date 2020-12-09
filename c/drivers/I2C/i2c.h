@@ -1,4 +1,7 @@
-// i2c.h
+// File:          c/drivers/I2C/i2c.h
+// By:            Samuel Duclos
+// For:           My team.
+// Description:   I2C driver for Linux.
 
 #ifndef I2C_H
     #define I2C_H
@@ -9,9 +12,18 @@
 
     #include <stddef.h>
     #include <stdint.h>
+    #include <stdint.h>
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+    #include <sys/ioctl.h>
+    #include <linux/i2c-dev.h>
 
     #define I2C_MAX_BUS 5
     #define I2C_BUFFER_SIZE 128
+    #define unlikely(x) __builtin_expect (!!(x), 0)
+    #define likely(x) __builtin_expect (!!(x), 1)
 
     int i2c_init(int bus, uint8_t devAddr);
     int i2c_close(int bus);
@@ -34,6 +46,13 @@
     #ifdef AUTOPILOT_EXT
         int i2c_read_data(int bus, uint8_t regAddr, size_t length, uint8_t *data);
     #endif
+
+    typedef struct i2c_state_t {
+        uint8_t devAddr;
+        int fd;
+        int initialized;
+        int lock;
+    } i2c_state_t;
 
     #ifdef __cplusplus
         }

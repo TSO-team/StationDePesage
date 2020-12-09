@@ -1,24 +1,9 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h>
+// File:          c/drivers/I2C/i2c.c
+// By:            Samuel Duclos
+// For:           My team.
+// Description:   I2C driver for Linux.
 
-//#include <rc/i2c.h>
 #include "i2c.h"
-
-#define unlikely(x)	__builtin_expect (!!(x), 0)
-#define likely(x)	__builtin_expect (!!(x), 1)
-
-typedef struct i2c_state_t {
-    /* data */
-    uint8_t devAddr;
-    int fd;
-    int initialized;
-    int lock;
-} i2c_state_t;
 
 static i2c_state_t i2c[I2C_MAX_BUS+1];
 

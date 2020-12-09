@@ -1,32 +1,18 @@
-#include <stdio.h>
-#include <termios.h>
-#include <errno.h>
-#include <time.h>
-#include <sys/time.h> // for timeval
-#include <fcntl.h> // for open
-#include <unistd.h> // for close
-#include <string.h>
-#include <sys/ioctl.h>
-#include <math.h>
+// File:        c/drivers/UART/uart.c
+// By:          Samuel Duclos
+// For:         My team.
+// Description: UART driver for Linux.
 
-#include <rc/uart.h>
+#include "UART.h"
 
-#define MAX_BUS		16
-#define STRING_BUF	64
-
-// Most bytes to read at once. This is the size of the Sitara UART FIFO buffer.
-#define MAX_READ_LEN	128
-
-
-static int   uart_fd[MAX_BUS+1]; // file descriptors for all ports
-static float uart_bus_timeout_s[MAX_BUS+1]; // user-requested timeout in seconds for each bus
-static int   uart_shutdown_flag[MAX_BUS+1];
-
+static int uart_fd[MAX_BUS + 1]; // file descriptors for all ports
+static float uart_bus_timeout_s[MAX_BUS + 1]; // user-requested timeout in seconds for each bus
+static int uart_shutdown_flag[MAX_BUS + 1];
 
 int uart_init(int bus, int baudrate, float timeout_s, int canonical_en, int stop_bits, int parity_en) {
+    struct termios config;
     int tmpfd, tenths;
     char buf[STRING_BUF];
-    struct termios config;
     speed_t speed; //baudrate
 
     // sanity checks
