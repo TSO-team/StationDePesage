@@ -19,8 +19,8 @@ def parse_args():
                                                  'balance/buzzer/sensor/uARM payload through SIGUSR1 and retrieving balance '
                                                  'weights using popen communication feedback.', 
                                      formatter_class=argparse.RawTextHelpFormatter)
-    add_payload_args(parser)
-    add_CAN_args(parser)
+    parser = add_payload_args(parser)
+    parser = add_CAN_args(parser)
     return parser.parse_args()
 
 def spawn_process_and_get_pid(args):
@@ -54,7 +54,7 @@ def main():
     print(vars(args))
 
     TSO_protocol = CAN.Protocol(interface_type=args.can_interface_type, 
-                                arbitration_id=args.can_id, 
+                                arbitration_id=args.can_arbitration_id, 
                                 bitrate=args.can_bitrate, 
                                 time_base=args.can_time_base, 
                                 number_of_stations=args.can_number_of_stations)

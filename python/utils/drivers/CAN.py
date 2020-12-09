@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        python/drivers/CAN.py
+# File:        python/utils/drivers/CAN.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: Driver for CAN bus.
@@ -9,6 +9,9 @@ from __future__ import print_function
 import can
 
 class CAN_driver:
+    def __init__(self, interface_type='vcan', bitrate=50000):
+        self.CAN_init_driver(interface_type=interface_type, bitrate=bitrate)
+
     def CAN_init_driver(self, interface_type='vcan', bitrate=50000):
         self.CAN_initialize_default_arguments(channel='socketcan', is_extended_id=False)
         self.CAN_initialize_configurable_arguments(interface_type=interface_type, bitrate=bitrate)
@@ -16,6 +19,8 @@ class CAN_driver:
 
         self.sending_bus = can.interface.Bus(**constructor_arguments)
         self.receiving_bus = can.interface.Bus(**constructor_arguments)
+
+        #self.handle_exit_signals()
 
     def CAN_initialize_default_arguments(self, channel='socketcan', is_extended_id=False):
         self.channel = channel
@@ -61,4 +66,17 @@ class CAN_driver:
             print('CAN ERROR WHILE RECEIVING MESSAGE!')
 
         return CAN_message_received
+
+    '''
+    def reset(self):
+        print('CAN closed...')
+
+    def __del__(self):
+        self.reset()
+
+    def handle_exit_signals(self):
+        signal.signal(signal.SIGINT, self.reset) # Handles CTRL-C for clean up.
+        signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
+        signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
+    '''
 

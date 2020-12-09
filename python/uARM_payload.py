@@ -9,23 +9,29 @@
 from __future__ import print_function
 from utils.payload import add_payload_args
 from utils import payload
+import argparse
 
-def main():
-    import argparse
+def parse_args():
     parser = argparse.ArgumentParser(description='Test uARM for object detection using I2C VL6180X Time-of-Flight sensor to scan until object is found.', 
                                      formatter_class=argparse.RawTextHelpFormatter)
-    args = add_payload_args(parser)
-    print(args)
-    pay = payload.Payload(initial_x_position=args.initial_x_position, 
-                          initial_y_position=args.initial_y_position, 
-                          initial_z_position=args.initial_z_position, 
-                          vehicle_x_position=args.vehicle_x_position, 
-                          vehicle_y_position=args.vehicle_y_position, 
-                          vehicle_z_position=args.vehicle_z_position, 
-                          balance_x_position=args.balance_x_position, 
-                          balance_y_position=args.balance_y_position, 
-                          balance_z_position=args.balance_z_position, 
-                          uarm_speed=args.uarm_speed, 
+    parser = add_payload_args(parser)
+    return parser
+
+def main():
+    parser = parse_args()
+    args = parser.parse_args()
+    print(vars(args))
+
+    pay = payload.Payload(initial_x_position=args.first_x_position, 
+                          initial_y_position=args.first_y_position, 
+                          initial_z_position=args.first_z_position, 
+                          vehicle_x_position=args.second_x_position, 
+                          vehicle_y_position=args.second_y_position, 
+                          vehicle_z_position=args.second_z_position, 
+                          balance_x_position=args.third_x_position, 
+                          balance_y_position=args.third_y_position, 
+                          balance_z_position=args.third_z_position, 
+                          uarm_speed=args.speed, 
                           sensor_i2c_port=args.sensor_i2c_port, 
                           sensor_threshold=args.sensor_threshold, 
                           buzzer_frequency_multiplier=args.buzzer_frequency_multiplier, 

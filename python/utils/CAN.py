@@ -6,30 +6,30 @@
 # Description: TSO protocol for CAN bus.
 
 from __future__ import print_function
-import can.Message, drivers.CAN, os, signal, subprocess, time
+import os, signal, subprocess, time, utils.drivers.CAN
 
 def add_CAN_args(parser):
     parser.add_argument('--can-interface-type', metavar='<can-interface-type>', type=str, required=False, default='vcan', help='One of \'vcan\' or \'can\'.')
-    parser.add_argument('--can-id', metavar='<can-id>', type=int, required=False, default=3, help='The number of the station on the CAN network.')
+    parser.add_argument('--can-arbitration-id', metavar='<can-arbitration-id>', type=int, required=False, default=3, help='The number of the station on the CAN network.')
     parser.add_argument('--can-bitrate', metavar='<can-bitrate>', type=int, required=False, default=50000, help='Bitrate on CAN network.')
     parser.add_argument('--can-time-base', metavar='<can-time-base>', type=float, required=False, default=0.02, help='Time base in seconds regulating the time lapse when each station can transmit in turn on the CAN network.')
     parser.add_argument('--can-number-of-stations', metavar='<can-number-of-stations>', type=int, required=False, default=4, help='Number of stations on the CAN network.')
-    parser.add_argument('--can-delay', metavar='<can-delay>', type=float, required=False, default=2.0, help='CAN delay.')
-    return parser.parse_args()
+    return parser
 
-class Protocol(drivers.CAN.CAN_driver):
+class Protocol(utils.drivers.CAN.CAN_driver):
     def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02, number_of_stations=4):
         self.initialize_default_arguments()
         self.initialize_configurable_arguments(arbitration_id=arbitration_id, time_base=time_base, number_of_stations=number_of_stations)
         self.initialize_inferred_arguments()
         self.set_CAN_protocol()
 
-        self.pre_configure_CAN()
+        self.pre_configure_CAN(interface_type=interface_type, bitrate=bitrate)
 
-        self.CAN_init_driver(interface_type=interface_type, bitrate=bitrate)
+        super().__init__(interface_type=interface_type, bitrate=bitrate)
 
-        self.handle_exit_signals()
+        #self.handle_exit_signals()
 
+    '''
     def reset(self):
         epilog = '/bin/bash /home/debian/workspace/StationDePesage/bash/CAN/epilog.sh %s'
         os.system(epilog % self.interface_type)
@@ -42,6 +42,7 @@ class Protocol(drivers.CAN.CAN_driver):
         signal.signal(signal.SIGINT, self.reset) # Handles CTRL-C for clean up.
         signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
+    '''
 
     def initialize_default_arguments(self):
         self.CAN_message_received_old = None
@@ -56,9 +57,9 @@ class Protocol(drivers.CAN.CAN_driver):
     def initialize_inferred_arguments(self):
         self.time_base_in_microseconds = float(self.time_base) * 10000000.0
 
-    def pre_configure_CAN(self):
+    def pre_configure_CAN(self, interface_type='vcan', bitrate=50000):
         prelude = '/bin/bash /home/debian/workspace/StationDePesage/bash/CAN/prelude.sh %s %d %d %.2f'
-        os.system(prelude % (self.interface_type, self.arbitration_id, self.bitrate, self.time_base))
+        os.system(prelude % (interface_type, self.arbitration_id, bitrate, self.time_base))
 
     def set_CAN_protocol(self):
         self.OFF = 0x00
@@ -135,9 +136,7 @@ class Protocol(drivers.CAN.CAN_driver):
         self.CAN_send(self.arbitration_id, data)
 
     def receive(self):
-        try:
+        if self.CAN_message_received is not None:
             self.CAN_message_received_old = self.CAN_message_received.copy()
-            self.CAN_message_received = self.CAN_receive()
-        except AttributeError:
-            pass
+        self.CAN_message_received = self.CAN_receive()
 

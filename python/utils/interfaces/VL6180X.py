@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# File:        python/interfaces/VL6180X.py
+# File:        python/utils/interfaces/VL6180X.py
 # By:          Samuel Duclos
 # For:         My team.
 # Description: I2C driver interface for VL6180X Time-of-Flight sensor.

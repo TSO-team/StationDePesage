@@ -39,7 +39,7 @@ def add_payload_args(parser):
     parser.add_argument('--servo-detach-delay', metavar='<servo-detach-delay>', type=float, required=False, default=5.0, help='Delay after uARM detaches servos.')
     parser.add_argument('--set-position-delay', metavar='<set-position-delay>', type=float, required=False, default=5.0, help='Delay after uARM set to position.')
     parser.add_argument('--transition-delay', metavar='<transition-delay>', type=float, required=False, default=5.0, help='Delay after using uARM buzzer signals the end of a phase and allows world to react.')
-    return parser.parse_known_args()
+    return parser
 
 class Payload:
     def __init__(self, 
@@ -124,7 +124,7 @@ class Payload:
         self.buzzer = buzzer.Buzzer(uarm=self.uarm.uarm, servo_detach_delay=self.uarm.servo_detach_delay, transition_delay=self.transition_delay)
         self.sensor = sensor.VL6180X(i2c_port=self.sensor_i2c_port)
         self.balance = balance.Balance(tty_port=self.balance_tty_port)
-        self.handle_exit_signals()
+        #self.handle_exit_signals()
         self.uarm.reset()
 
     def uarm_payload(self, grab_position=None, drop_position=None):
@@ -141,6 +141,10 @@ class Payload:
         self.buzzer_payload()
         print(weight) # Output weight to parent.
 
+    '''
+    def __del__(self):
+        self.reset()
+
     def reset(self):
         self.uarm.reset()
         print('Factory reset!')
@@ -150,4 +154,5 @@ class Payload:
         signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
         signal.signal(signal.SIGUSR1, self.payload) # Launches payload when requested from parent.
+    '''
 
