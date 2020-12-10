@@ -6,7 +6,6 @@
 # Description: uARM control in Python for TSO_team.
 # For help:    python3 python/uARM_payload.py --help # <-- Use --help for help using this file like this. <--
 # TODO:        - translate to C (see C)
-#              - fix parser
 
 from __future__ import print_function
 from utils import CAN
