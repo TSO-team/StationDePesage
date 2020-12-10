@@ -9,12 +9,7 @@ from __future__ import print_function
 import os, signal, subprocess, time, utils.drivers.CAN
 
 def add_CAN_args(parser):
-<<<<<<< HEAD
-    parser.add_argument('--can-channel', metavar='<can-channel>', type=str, required=False, default='vcan0', help='One of \'vcan\' or \'can\'.')
-    parser.add_argument('--can-interface-type', metavar='<can-interface-type>', type=str, required=False, default='virtual', help='One of \'virtual\' or \'socketcan\'.')
-=======
-    parser.add_argument('--can-interface-type', metavar='<can-interface-type>', type=str, required=False, default='vcan', help='One of \'vcan\' or \'can\'.')
->>>>>>> 0ccfa61942c6796f7da346360fba7a4fa3cec44e
+    parser.add_argument('--can-interface-type', metavar='<can-interface-type>', type=str, required=False, default='can', help='One of \'vcan\' or \'can\'.')
     parser.add_argument('--can-arbitration-id', metavar='<can-arbitration-id>', type=int, required=False, default=3, help='The number of the station on the CAN network.')
     parser.add_argument('--can-bitrate', metavar='<can-bitrate>', type=int, required=False, default=50000, help='Bitrate on CAN network.')
     parser.add_argument('--can-time-base', metavar='<can-time-base>', type=float, required=False, default=0.02, help='Time base in seconds regulating the time lapse when each station can transmit in turn on the CAN network.')
@@ -22,26 +17,16 @@ def add_CAN_args(parser):
     return parser
 
 class Protocol(utils.drivers.CAN.CAN_driver):
-<<<<<<< HEAD
-    def __init__(self, channel='vcan0', interface_type='socketcan', arbitration_id=3, bitrate=50000, time_base=0.02, number_of_stations=4):
-=======
     def __init__(self, interface_type='vcan', arbitration_id=3, bitrate=50000, time_base=0.02, number_of_stations=4):
->>>>>>> 0ccfa61942c6796f7da346360fba7a4fa3cec44e
         self.initialize_default_arguments()
-        self.initialize_configurable_arguments(channel=channel, arbitration_id=arbitration_id, time_base=time_base, number_of_stations=number_of_stations)
+        self.initialize_configurable_arguments(interface_type=interface_type, arbitration_id=arbitration_id, time_base=time_base, number_of_stations=number_of_stations)
         self.initialize_inferred_arguments()
         self.set_CAN_protocol()
 
-<<<<<<< HEAD
-        self.pre_configure_CAN(channel=channel[:-1], bitrate=bitrate)
+        self.pre_configure_CAN(interface_type=interface_type, bitrate=bitrate)
         time.sleep(5)
 
-        super().__init__(channel=channel, interface_type=interface_type, bitrate=bitrate)
-=======
-        self.pre_configure_CAN(interface_type=interface_type, bitrate=bitrate)
-
         super().__init__(interface_type=interface_type, bitrate=bitrate)
->>>>>>> 0ccfa61942c6796f7da346360fba7a4fa3cec44e
 
         #self.handle_exit_signals()
 
@@ -65,7 +50,7 @@ class Protocol(utils.drivers.CAN.CAN_driver):
         self.CAN_message_received = None
         self.CAN_message_send = None
 
-    def initialize_configurable_arguments(self, channel='vcan0', arbitration_id=3, time_base=0.02, number_of_stations=4):
+    def initialize_configurable_arguments(self, interface_type='can', arbitration_id=3, time_base=0.02, number_of_stations=4):
         self.arbitration_id = arbitration_id
         self.time_base = time_base
         self.number_of_stations = number_of_stations
@@ -73,15 +58,9 @@ class Protocol(utils.drivers.CAN.CAN_driver):
     def initialize_inferred_arguments(self):
         self.time_base_in_microseconds = float(self.time_base) * 10000000.0
 
-<<<<<<< HEAD
-    def pre_configure_CAN(self, channel='vcan', bitrate=50000):
-        prelude = '/bin/bash /home/debian/workspace/StationDePesage/bash/CAN/prelude.sh %s %d %d %.2f'
-        os.system(prelude % (channel, self.arbitration_id, bitrate, self.time_base))
-=======
-    def pre_configure_CAN(self, interface_type='vcan', bitrate=50000):
+    def pre_configure_CAN(self, interface_type='can', bitrate=50000):
         prelude = '/bin/bash /home/debian/workspace/StationDePesage/bash/CAN/prelude.sh %s %d %d %.2f'
         os.system(prelude % (interface_type, self.arbitration_id, bitrate, self.time_base))
->>>>>>> 0ccfa61942c6796f7da346360fba7a4fa3cec44e
 
     def set_CAN_protocol(self):
         self.OFF = 0x00

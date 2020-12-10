@@ -9,21 +9,13 @@ from __future__ import print_function
 import can
 
 class CAN_driver:
-<<<<<<< HEAD:python/utils/drivers/CAN.py
-    def __init__(self, channel='vcan0', interface_type='socketcan', bitrate=50000):
-        self.CAN_init_driver(channel=channel, interface_type=interface_type, bitrate=bitrate)
-
-    def CAN_init_driver(self, channel='vcan0', interface_type='virtual', bitrate=50000):
-        self.is_extended_id = False
-        self.CAN_initialize_configurable_arguments(channel=channel, interface_type=interface_type, bitrate=bitrate)
-=======
-    def __init__(self, interface_type='vcan', bitrate=50000):
+    def __init__(self, interface_type='can', bitrate=50000):
         self.CAN_init_driver(interface_type=interface_type, bitrate=bitrate)
 
-    def CAN_init_driver(self, interface_type='vcan', bitrate=50000):
-        self.CAN_initialize_default_arguments(channel='socketcan', is_extended_id=False)
+    def CAN_init_driver(self, interface_type='can', bitrate=50000):
+        self.CAN_initialize_default_arguments()
         self.CAN_initialize_configurable_arguments(interface_type=interface_type, bitrate=bitrate)
->>>>>>> 0ccfa61942c6796f7da346360fba7a4fa3cec44e:python/utils/drivers/CAN.py
+
         constructor_arguments = self.CAN_initialize_inferred_arguments()
 
         print(constructor_arguments)
@@ -32,33 +24,29 @@ class CAN_driver:
         self.receiving_bus = can.interface.Bus(**constructor_arguments)
 
         #self.handle_exit_signals()
-<<<<<<< HEAD:python/utils/drivers/CAN.py
-=======
 
-    def CAN_initialize_default_arguments(self, channel='socketcan', is_extended_id=False):
-        self.channel = channel
+    def CAN_initialize_default_arguments(self, is_extended_id=False):
         self.is_extended_id = is_extended_id
->>>>>>> 0ccfa61942c6796f7da346360fba7a4fa3cec44e:python/utils/drivers/CAN.py
 
-    def CAN_initialize_configurable_arguments(self, channel='can0', interface_type='socketcan', bitrate=50000):
-        self.channel = channel
+    def CAN_initialize_configurable_arguments(self, interface_type='can', bitrate=50000):
         self.interface_type = interface_type
         self.bitrate = bitrate
 
     def CAN_initialize_inferred_arguments(self):
-        self.interface = self.interface_type + str(0)
+        self.channel = self.interface_type + str(0)
 
         constructor_arguments = {'channel': self.channel}
 
         # Virtual CAN interface has no bitrate.
-        if self.interface_type != 'vcan':
-            constructor_arguments['bitrate'] = self.bitrate
-            self.bustype = self.interface_type
-            constructor_arguments['bustype'] = 'socketcan'
+        if self.interface_type != 'can':
+            self.bustype = 'virtual'
+            self.bitrate = 0
         else:
-            constructor_arguments['bustype'] = 'virtual'
+            self.bustype = 'socketcan'
+            constructor_arguments['bitrate'] = self.bitrate
 
-        self.bustype = constructor_arguments['bustype']
+        constructor_arguments['bustype'] = self.bustype
+
         return constructor_arguments
 
     def CAN_send(self, arbitration_id, data):
