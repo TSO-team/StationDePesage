@@ -7,13 +7,15 @@
 
 from __future__ import print_function
 from adafruit_extended_bus import ExtendedI2C as I2C
-import busio, utils.interfaces.VL6180X as sensor_driver, signal, time
+import busio, signal, time
+#import utils.interfaces.VL6180X as sensor_interface
+import adafruit_vl6180x
 
 class VL6180X:
     def __init__(self, i2c_port=1):
-        self.driver = sensor_driver
         i2c = I2C(i2c_port) # Create I2C bus.
-        self.sensor = self.driver.VL6180X(i2c) # Create sensor instance.
+        #self.sensor_interface = sensor_interface.VL6180X(i2c) # Create sensor instance.
+        self.sensor_interface = adafruit_vl6180x.VL6180X(i2c) # Create sensor instance.
         self.handle_exit_signals()
         time.sleep(2)
 
@@ -29,18 +31,18 @@ class VL6180X:
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
 
     def read_distance(self):
-        range_mm = self.sensor.range
+        range_mm = self.sensor_interface.range
         print("Range: {0}mm".format(range_mm))
         # Read the light, note this requires specifying a gain value:
-        # - self.driver.ALS_GAIN_1 = 1x
-        # - self.driver.ALS_GAIN_1_25 = 1.25x
-        # - self.driver.ALS_GAIN_1_67 = 1.67x
-        # - self.driver.ALS_GAIN_2_5 = 2.5x
-        # - self.driver.ALS_GAIN_5 = 5x
-        # - self.driver.ALS_GAIN_10 = 10x
-        # - self.driver.ALS_GAIN_20 = 20x
-        # - self.driver.ALS_GAIN_40 = 40x
-        light_lux = self.sensor.read_lux(self.driver.ALS_GAIN_1)
+        # - self.sensor_interface.ALS_GAIN_1 = 1x
+        # - self.sensor_interface.ALS_GAIN_1_25 = 1.25x
+        # - self.sensor_interface.ALS_GAIN_1_67 = 1.67x
+        # - self.sensor_interface.ALS_GAIN_2_5 = 2.5x
+        # - self.sensor_interface.ALS_GAIN_5 = 5x
+        # - self.sensor_interface.ALS_GAIN_10 = 10x
+        # - self.sensor_interface.ALS_GAIN_20 = 20x
+        # - self.sensor_interface.ALS_GAIN_40 = 40x
+        light_lux = self.sensor_interface.read_lux(self.interface.ALS_GAIN_1)
         #print("Light (1x gain): {0}lux".format(light_lux))
         return light_lux
 

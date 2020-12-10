@@ -23,7 +23,8 @@ def main():
     args = parse_args()
     print(vars(args))
 
-    TSO_protocol = CAN.Protocol(interface_type=args.can_interface_type, 
+    TSO_protocol = CAN.Protocol(channel=args.can_channel, 
+                                interface_type=args.can_interface_type, 
                                 arbitration_id=args.can_arbitration_id, 
                                 bitrate=args.can_bitrate, 
                                 time_base=args.can_time_base, 
