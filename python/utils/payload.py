@@ -124,7 +124,7 @@ class Payload:
         self.buzzer = buzzer.Buzzer(uarm=self.uarm.uarm, servo_detach_delay=self.uarm.servo_detach_delay, transition_delay=self.transition_delay)
         self.sensor = sensor.VL6180X(i2c_port=self.sensor_i2c_port)
         self.balance = balance.Balance(tty_port=self.balance_tty_port)
-        #self.handle_exit_signals()
+        self.handle_signals()
         self.uarm.reset()
 
     def uarm_payload(self, grab_position=None, drop_position=None):
@@ -141,7 +141,6 @@ class Payload:
         self.buzzer_payload()
         print(weight) # Output weight to parent.
 
-    '''
     def __del__(self):
         self.reset()
 
@@ -153,6 +152,11 @@ class Payload:
         signal.signal(signal.SIGINT, self.reset) # Handles CTRL-C for clean up.
         signal.signal(signal.SIGHUP, self.reset) # Handles stalled process for clean up.
         signal.signal(signal.SIGTERM, self.reset) # Handles clean exits for clean up.
+
+    def handle_payload_signal(self):
         signal.signal(signal.SIGUSR1, self.payload) # Launches payload when requested from parent.
-    '''
+
+    def handle_signals(self):
+        self.handle_payload_signal()
+        self.handle_exit_signals()
 
