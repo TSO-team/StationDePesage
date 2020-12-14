@@ -1,6 +1,7 @@
 # StationDePesage
 
-## En développement.
+# Samuel Duclos
+## Version alpha (il reste un peu de déboguage, mais sûrement pas grand chose.
 ## Voir les autres répertoires du projet pour voir mes contributions sur le rapport et les autres stations de l'usine...
 ## Ceci est un projet d'école. Je n'étais pas sensé toucher aux autres stations mais...
 
